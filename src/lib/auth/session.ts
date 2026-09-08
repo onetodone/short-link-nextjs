@@ -4,7 +4,7 @@ import { SessionExpiredError } from '@/lib/api/errors'
 import { networkError } from '@/lib/api/problem'
 import type { AuthResponse, AuthUser } from '@/lib/api/types'
 
-const CHANNEL_NAME = 'short-url-auth'
+const CHANNEL_NAME = 'short-link-auth'
 const REFRESH_PATH = '/api/v1/auth/refresh'
 const LOGOUT_PATH = '/api/v1/auth/logout'
 const LOGOUT_ALL_PATH = '/api/v1/auth/logout-all'

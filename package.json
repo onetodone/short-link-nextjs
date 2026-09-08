@@ -1,7 +1,7 @@
 {
-  "name": "short-url-front",
+  "name": "short-link-front",
   "version": "0.1.0",
-  "description": "Cabinet frontend for the short-url API — create, list, edit, and delete your own short links and see per-link click counts.",
+  "description": "Cabinet frontend for the short-link API — create, list, edit, and delete your own short links and see per-link click counts.",
   "private": true,
   "author": "Anton Holubeu (https://github.com/aholu)",
   "license": "MIT",

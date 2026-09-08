@@ -1,4 +1,4 @@
-const KEY_PREFIX = 'short-url:edit:'
+const KEY_PREFIX = 'short-link:edit:'
 
 export function stashOriginalUrl(shortCode: string, originalUrl: string): void {
   try {

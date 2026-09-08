@@ -11,10 +11,10 @@ const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3001'
 
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
-  applicationName: 'Short URL',
+  applicationName: 'Short Link',
   title: {
-    default: 'Short URL',
-    template: '%s | Short URL',
+    default: 'Short Link',
+    template: '%s | Short Link',
   },
   description: 'Create, track, and manage your short links.',
   robots: {

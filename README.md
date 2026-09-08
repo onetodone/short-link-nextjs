@@ -1,10 +1,10 @@
-# Short URL — Frontend
+# Short Link — Frontend
 
-A signed-in cabinet for the **short-url** API: create, list, edit, and delete
+A signed-in cabinet for the **short-link** API: create, list, edit, and delete
 your own short links and see per-link click counts.
 
 This is a **frontend only** — a Next.js client. It has **no database and no
-backend of its own**; it talks to the separate `short-url` NestJS API. That API
+backend of its own**; it talks to the separate `short-link` NestJS API. That API
 must be running for this app to do anything useful.
 
 ## Tech stack
@@ -28,7 +28,7 @@ local component state.
 - Node.js 22+ (CI runs on 26)
 - [pnpm](https://pnpm.io) — the version is pinned via `packageManager`; run
   `corepack enable` to have it picked up automatically
-- **The `short-url` API running and reachable.** It needs PostgreSQL and Redis; see that
+- **The `short-link` API running and reachable.** It needs PostgreSQL and Redis; see that
   project's README for how to start it. Quick check:
 
   ```bash
@@ -49,12 +49,11 @@ local component state.
    cp .env.example .env
    ```
 
-   | Variable                     | Description                                                                                                                                                   |
-   | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-   | `PORT`                       | Port the dev/start server listens on. Preloaded via `dotenv-cli` in `dev`/`start`.                                                                            |
-   | `API_ORIGIN`                 | **Server-only** origin of the API for the rewrites proxy. Never `NEXT_PUBLIC_`. The proxy hop is server-side; in production this is the API's _internal_ URL. |
-   | `NEXT_PUBLIC_APP_URL`        | Public base URL this app is served at (`metadataBase`).                                                                                                       |
-   | `NEXT_PUBLIC_SHORT_URL_BASE` | Public redirect origin the API builds `shortUrl` from. Informational — the API returns `shortUrl` ready to use.                                               |
+   | Variable              | Description                                                                                                                                                   |
+   | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | `PORT`                | Port the dev/start server listens on. Preloaded via `dotenv-cli` in `dev`/`start`.                                                                            |
+   | `API_ORIGIN`          | **Server-only** origin of the API for the rewrites proxy. Never `NEXT_PUBLIC_`. The proxy hop is server-side; in production this is the API's _internal_ URL. |
+   | `NEXT_PUBLIC_APP_URL` | Public base URL this app is served at (`metadataBase`).                                                                                                       |
 
    `.env` is git-ignored and wins over the code-level fallbacks. If a value is
    unset, `next.config.ts` falls back to `http://localhost:3000` for
@@ -85,7 +84,7 @@ in an `HttpOnly; SameSite=Strict; Path=/api/v1/auth` cookie.
   layout-shaped skeleton while the boot refresh is in flight. A Next middleware
   could see neither the in-memory token nor the path-scoped refresh cookie, so
   there is no `proxy.ts` / `middleware.ts` auth check.
-- Multi-tab logout/login propagates over `BroadcastChannel('short-url-auth')`.
+- Multi-tab logout/login propagates over `BroadcastChannel('short-link-auth')`.
 - "Sign out" is server-side: it best-effort calls `POST /api/v1/auth/logout`
   (the profile also offers "Sign out everywhere" → `POST /api/v1/auth/logout-all`)
   and then always drops the in-memory token and redirects to `/login`.
@@ -101,7 +100,7 @@ Set at runtime (not baked into the build):
 | `NEXT_PUBLIC_APP_URL` | The **public** URL this app is served at.                    |
 
 Only `NEXT_PUBLIC_*` values are read at build time and inlined into the client
-bundle, so `NEXT_PUBLIC_APP_URL` / `NEXT_PUBLIC_SHORT_URL_BASE` must be correct
+bundle, so `NEXT_PUBLIC_APP_URL` must be correct
 when you run `pnpm build`. `API_ORIGIN` and `PORT` are read by the server
 process at start.
 
