@@ -9,12 +9,12 @@ export default function RootErrorBoundary({ error, reset }: { error: Error & { d
   }, [error])
 
   return (
-    <div className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center gap-4 p-4 text-center">
+    <main className="mx-auto flex min-h-svh w-full max-w-md flex-1 flex-col items-center justify-center gap-4 p-4 text-center">
       <h1 className="text-2xl font-semibold">Something went wrong</h1>
       <p className="text-sm text-muted-foreground">
         An unexpected error occurred. You can try again, or refresh the page.
       </p>
       <Button onClick={reset}>Try again</Button>
-    </div>
+    </main>
   )
 }

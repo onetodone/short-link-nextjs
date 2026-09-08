@@ -1,11 +1,13 @@
 import { decodeExp } from '@/lib/auth/jwt'
-import { setAccessToken } from '@/lib/auth/token-store'
+import { getAccessToken, setAccessToken } from '@/lib/auth/token-store'
 import { SessionExpiredError } from '@/lib/api/errors'
+import { networkError } from '@/lib/api/problem'
 import type { AuthResponse, AuthUser } from '@/lib/api/types'
 
 const CHANNEL_NAME = 'short-url-auth'
 const REFRESH_PATH = '/api/v1/auth/refresh'
 const PROACTIVE_SKEW_MS = 60_000
+const FOCUS_REFRESH_WINDOW_MS = 120_000
 
 export interface SessionSnapshot {
   user: AuthUser | null
@@ -134,11 +136,12 @@ async function doRefresh(): Promise<string> {
       body: '{}',
     })
   } catch {
-    expireSession()
-    throw new SessionExpiredError()
+    // Network failure, not an auth failure: keep the session, let the caller retry.
+    throw networkError()
   }
 
   if (!res.ok) {
+    // A real auth failure (401/403/...) — tear the session down.
     expireSession()
     throw new SessionExpiredError()
   }
@@ -157,6 +160,22 @@ async function doRefresh(): Promise<string> {
   }
 
   return adopt(body)
+}
+
+export function refreshIfStale(): void {
+  if (!snapshot.user) return
+
+  const token = getAccessToken()
+  if (token === null) {
+    void refreshAccessToken().catch(() => {})
+    return
+  }
+
+  const exp = decodeExp(token)
+  if (exp === null) return
+  if (exp * 1000 - Date.now() <= FOCUS_REFRESH_WINDOW_MS) {
+    void refreshAccessToken().catch(() => {})
+  }
 }
 
 let bootPromise: Promise<void> | null = null

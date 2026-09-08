@@ -7,8 +7,8 @@ import { findOriginalUrl } from '@/lib/api/urls'
 import { readStashedOriginalUrl } from '@/components/urls/url-nav-state'
 import { useApiQuery } from '@/hooks/use-api-query'
 import { PageContainer, PageHeader } from '@/components/page-header'
+import { EditUrlBodySkeleton } from '@/components/page-skeletons'
 import { UrlForm } from '@/components/urls/url-form'
-import { UrlFormSkeleton } from '@/components/urls/url-form-skeleton'
 
 const HEADER = {
   title: 'Edit short link',
@@ -32,14 +32,7 @@ export function EditUrlView({ shortCode }: { shortCode: string }) {
     router.replace('/')
   }, [notFound, router])
 
-  if (loading) {
-    return (
-      <PageContainer width="3xl">
-        <PageHeader title={HEADER.title} description={HEADER.description} />
-        <UrlFormSkeleton />
-      </PageContainer>
-    )
-  }
+  if (loading) return <EditUrlBodySkeleton />
 
   if (notFound || data == null) return null
 

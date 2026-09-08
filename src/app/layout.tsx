@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import { ThemeProvider } from '@/components/theme/theme-provider'
@@ -11,6 +11,7 @@ const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3001'
 
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
+  applicationName: 'Short URL',
   title: {
     default: 'Short URL',
     template: '%s | Short URL',
@@ -20,6 +21,14 @@ export const metadata: Metadata = {
     index: false,
     follow: false,
   },
+}
+
+export const viewport: Viewport = {
+  colorScheme: 'light dark',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0a0a0a' },
+  ],
 }
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {

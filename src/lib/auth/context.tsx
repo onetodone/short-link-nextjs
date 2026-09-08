@@ -8,6 +8,7 @@ import {
   getServerSessionSnapshot,
   getSessionSnapshot,
   logout as sessionLogout,
+  refreshIfStale,
   subscribeSession,
 } from '@/lib/auth/session'
 
@@ -27,6 +28,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     void ensureBooted()
+
+    const onFocus = () => {
+      if (document.visibilityState === 'visible') refreshIfStale()
+    }
+    document.addEventListener('visibilitychange', onFocus)
+    window.addEventListener('focus', onFocus)
+    return () => {
+      document.removeEventListener('visibilitychange', onFocus)
+      window.removeEventListener('focus', onFocus)
+    }
   }, [])
 
   const logout = useCallback(() => {
