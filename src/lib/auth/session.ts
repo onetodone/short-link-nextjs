@@ -6,6 +6,8 @@ import type { AuthResponse, AuthUser } from '@/lib/api/types'
 
 const CHANNEL_NAME = 'short-url-auth'
 const REFRESH_PATH = '/api/v1/auth/refresh'
+const LOGOUT_PATH = '/api/v1/auth/logout'
+const LOGOUT_ALL_PATH = '/api/v1/auth/logout-all'
 const PROACTIVE_SKEW_MS = 60_000
 const FOCUS_REFRESH_WINDOW_MS = 120_000
 
@@ -105,7 +107,24 @@ function applyClear(): void {
   setSnapshot({ user: null })
 }
 
+function revokeOnServer(path: string, accessToken: string | null): void {
+  if (!accessToken) return
+  void fetch(path, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { Authorization: `Bearer ${accessToken}`, 'content-type': 'application/json' },
+    keepalive: true,
+  }).catch(() => {})
+}
+
 export function logout(): void {
+  revokeOnServer(LOGOUT_PATH, getAccessToken())
+  applyClear()
+  channel?.postMessage({ type: 'clear' } satisfies BroadcastMessage)
+}
+
+export function logoutAll(): void {
+  revokeOnServer(LOGOUT_ALL_PATH, getAccessToken())
   applyClear()
   channel?.postMessage({ type: 'clear' } satisfies BroadcastMessage)
 }

@@ -7,14 +7,15 @@ import { useApiQuery } from '@/hooks/use-api-query'
 import { formatDate } from '@/lib/format'
 import { PageContainer, PageHeader } from '@/components/page-header'
 import { ProfileCardSkeleton } from '@/components/page-skeletons'
+import { SignOutAllDialog } from '@/components/auth/sign-out-all-dialog'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 
 const HEADER = { title: 'Profile', description: 'Your account details.' }
 
 export function ProfileView() {
-  const { user, logout } = useAuth()
+  const { user, logout, logoutAll } = useAuth()
   const { data, error, loading, refetch } = useApiQuery('me', fetchMe)
 
   const email = data?.email ?? user?.email ?? '—'
@@ -42,7 +43,6 @@ export function ProfileView() {
         <Card>
           <CardHeader>
             <CardTitle>Account</CardTitle>
-            <CardDescription>Managed by the short-url API. These fields are read-only.</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-6">
             <dl className="flex flex-col gap-4">
@@ -51,15 +51,23 @@ export function ProfileView() {
               <Row label="Account ID" value={data?.id ?? '—'} mono />
             </dl>
             <Separator />
-            <div className="flex flex-col gap-2">
-              <Button variant="outline" className="self-start" onClick={logout}>
-                Sign out
-              </Button>
+            <section className="flex flex-col gap-3" aria-labelledby="sessions-heading">
+              <div className="flex flex-col gap-1">
+                <h2 id="sessions-heading" className="text-sm font-medium">
+                  Sessions
+                </h2>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" onClick={logout}>
+                  Sign out
+                </Button>
+                <SignOutAllDialog onConfirm={logoutAll} />
+              </div>
               <p className="text-xs text-muted-foreground">
-                Signing out drops this device’s access token. The API keeps no logout endpoint, so the refresh session
-                stays valid up to 7 days.
+                “Sign out” ends this session. “Sign out everywhere” revokes every session on all your devices and
+                returns you to the login page.
               </p>
-            </div>
+            </section>
           </CardContent>
         </Card>
       )}

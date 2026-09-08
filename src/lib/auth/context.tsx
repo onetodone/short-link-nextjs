@@ -8,6 +8,7 @@ import {
   getServerSessionSnapshot,
   getSessionSnapshot,
   logout as sessionLogout,
+  logoutAll as sessionLogoutAll,
   refreshIfStale,
   subscribeSession,
 } from '@/lib/auth/session'
@@ -18,6 +19,7 @@ interface AuthContextValue {
   status: AuthStatus
   user: AuthUser | null
   logout: () => void
+  logoutAll: () => void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -45,9 +47,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.replace('/login')
   }, [router])
 
+  const logoutAll = useCallback(() => {
+    sessionLogoutAll()
+    router.replace('/login')
+  }, [router])
+
   const status: AuthStatus = !booted ? 'loading' : user ? 'authenticated' : 'unauthenticated'
 
-  return <AuthContext value={{ status, user, logout }}>{children}</AuthContext>
+  return <AuthContext value={{ status, user, logout, logoutAll }}>{children}</AuthContext>
 }
 
 export function useAuth(): AuthContextValue {

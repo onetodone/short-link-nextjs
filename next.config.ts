@@ -1,8 +1,11 @@
 import type { NextConfig } from 'next'
 
 const isDev = process.env.NODE_ENV !== 'production'
-
 const selfHosted = !process.env.VERCEL
+
+if (process.env.NODE_ENV === 'production' && !process.env.API_ORIGIN) {
+  console.warn('[next.config] API_ORIGIN is not set — the /api/v1 proxy will fall back to http://localhost:3000')
+}
 
 const apiOrigin = process.env.API_ORIGIN ?? 'http://localhost:3000'
 
