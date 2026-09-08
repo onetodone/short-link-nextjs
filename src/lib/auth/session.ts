@@ -56,17 +56,20 @@ function emitExpired(): void {
 const channel: BroadcastChannel | null =
   typeof window !== 'undefined' && typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel(CHANNEL_NAME) : null
 
-type BroadcastMessage = { type: 'adopt' } | { type: 'clear' }
+type BroadcastMessage = { type: 'token'; accessToken: string; user: AuthUser } | { type: 'clear' }
 
 if (channel) {
   channel.onmessage = (event: MessageEvent<BroadcastMessage>) => {
-    if (event.data?.type === 'clear') {
+    const message = event.data
+    if (message?.type === 'clear') {
       if (snapshot.user) {
         applyClear()
         emitExpired()
       }
-    } else if (event.data?.type === 'adopt') {
-      void refreshAccessToken().catch(() => {})
+    } else if (message?.type === 'token') {
+      setAccessToken(message.accessToken)
+      setSnapshot({ user: message.user })
+      scheduleProactiveRefresh(message.accessToken)
     }
   }
 }
@@ -97,7 +100,13 @@ export function adopt(response: AuthResponse, broadcast = true): string {
   setAccessToken(response.accessToken)
   setSnapshot({ user: response.user })
   scheduleProactiveRefresh(response.accessToken)
-  if (broadcast) channel?.postMessage({ type: 'adopt' } satisfies BroadcastMessage)
+  if (broadcast) {
+    channel?.postMessage({
+      type: 'token',
+      accessToken: response.accessToken,
+      user: response.user,
+    } satisfies BroadcastMessage)
+  }
   return response.accessToken
 }
 
@@ -112,7 +121,7 @@ function revokeOnServer(path: string, accessToken: string | null): void {
   void fetch(path, {
     method: 'POST',
     credentials: 'include',
-    headers: { Authorization: `Bearer ${accessToken}`, 'content-type': 'application/json' },
+    headers: { Authorization: `Bearer ${accessToken}` },
     keepalive: true,
   }).catch(() => {})
 }
@@ -145,7 +154,7 @@ export function refreshAccessToken(): Promise<string> {
   return refreshPromise
 }
 
-async function doRefresh(): Promise<string> {
+async function doRefresh(attempt = 0): Promise<string> {
   let res: Response
   try {
     res = await fetch(REFRESH_PATH, {
@@ -159,10 +168,19 @@ async function doRefresh(): Promise<string> {
     throw networkError()
   }
 
+  if (res.status === 429 && attempt < 2) {
+    const retryAfter = Number(res.headers.get('retry-after'))
+    const delayMs = (Number.isFinite(retryAfter) && retryAfter > 0 ? Math.min(retryAfter, 5) : 1) * 1000
+    await new Promise((resolve) => setTimeout(resolve, delayMs))
+    return doRefresh(attempt + 1)
+  }
+
   if (!res.ok) {
-    // A real auth failure (401/403/...) — tear the session down.
-    expireSession()
-    throw new SessionExpiredError()
+    if (res.status === 401 || res.status === 403) {
+      expireSession()
+      throw new SessionExpiredError()
+    }
+    throw networkError()
   }
 
   let body: AuthResponse
