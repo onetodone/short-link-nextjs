@@ -21,7 +21,7 @@ export function updateUrl(shortCode: string, url: string): Promise<UrlSummary> {
 }
 
 export function deleteUrl(shortCode: string): Promise<void> {
-  return apiFetch<void>(`/urls/${encodeURIComponent(shortCode)}`, { method: 'DELETE' })
+  return apiFetch<void>(`/urls/${encodeURIComponent(shortCode)}`, { method: 'DELETE', body: '{}' })
 }
 
 export async function findOriginalUrl(shortCode: string, maxPages = 10): Promise<string | null> {
