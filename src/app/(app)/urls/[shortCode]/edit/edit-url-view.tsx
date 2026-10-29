@@ -2,29 +2,23 @@
 
 import { useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { AlertTriangleIcon } from 'lucide-react'
 import { toast } from 'sonner'
-import { findOriginalUrl } from '@/lib/api/urls'
-import { readStashedOriginalUrl } from '@/components/urls/url-nav-state'
+import { ApiError } from '@/lib/api/errors'
+import { getUrl } from '@/lib/api/urls'
 import { useApiQuery } from '@/hooks/use-api-query'
 import { PageContainer, PageHeader } from '@/components/page-header'
-import { EditUrlBodySkeleton } from '@/components/page-skeletons'
+import { EDIT_URL_HEADER, EditUrlBodySkeleton } from '@/components/page-skeletons'
 import { UrlForm } from '@/components/urls/url-form'
-
-const HEADER = {
-  title: 'Edit short link',
-  description: 'Change where this short link points. The short link itself stays the same.',
-}
+import { Button } from '@/components/ui/button'
 
 export function EditUrlView({ shortCode }: { shortCode: string }) {
   const router = useRouter()
 
-  const resolve = useCallback(
-    async () => readStashedOriginalUrl(shortCode) ?? (await findOriginalUrl(shortCode)),
-    [shortCode],
-  )
-  const { data, error, loading } = useApiQuery<string | null>(`url-edit:${shortCode}`, resolve)
+  const fetchUrl = useCallback(() => getUrl(shortCode), [shortCode])
+  const { data, error, loading, refetch } = useApiQuery(`url:${shortCode}`, fetchUrl)
 
-  const notFound = !loading && (Boolean(error) || data == null)
+  const notFound = error instanceof ApiError && error.status === 404
 
   useEffect(() => {
     if (!notFound) return
@@ -34,12 +28,23 @@ export function EditUrlView({ shortCode }: { shortCode: string }) {
 
   if (loading) return <EditUrlBodySkeleton />
 
-  if (notFound || data == null) return null
+  if (notFound) return null
 
   return (
     <PageContainer width="3xl">
-      <PageHeader title={HEADER.title} description={HEADER.description} />
-      <UrlForm mode="edit" shortCode={shortCode} defaultUrl={data} />
+      <PageHeader title={EDIT_URL_HEADER.title} description={EDIT_URL_HEADER.description} />
+      {data ? (
+        <UrlForm mode="edit" shortCode={shortCode} defaultUrl={data.originalUrl} defaultNote={data.note ?? ''} />
+      ) : (
+        <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed p-12 text-center">
+          <AlertTriangleIcon className="size-5 text-destructive" />
+          <p className="font-medium">Couldn’t load this short link</p>
+          {error && <p className="text-sm text-muted-foreground">{error.message}</p>}
+          <Button variant="outline" size="sm" onClick={refetch}>
+            Try again
+          </Button>
+        </div>
+      )}
     </PageContainer>
   )
 }
