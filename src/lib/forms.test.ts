@@ -2,6 +2,7 @@ import * as z from 'zod'
 import { describe, expect, it, vi } from 'vitest'
 
 import { ApiError, SessionExpiredError } from '@/lib/api/errors'
+import { parseApiError } from '@/lib/api/problem'
 import { runFormAction, toFormState } from '@/lib/forms'
 
 const schema = z.object({
@@ -67,5 +68,16 @@ describe('toFormState', () => {
       error: 'Invalid URL',
       fieldErrors: { url: 'Invalid URL', _: 'Body is invalid' },
     })
+  })
+
+  it('puts a rejected destination on the url field and the quota on the form', () => {
+    const rejected = parseApiError(422, { code: 'DESTINATION_REJECTED', reason: 'IP_ADDRESS' })
+    expect(toFormState(rejected)).toEqual({
+      error: 'Use a domain name instead of an IP address.',
+      fieldErrors: { url: 'Use a domain name instead of an IP address.' },
+    })
+
+    const quota = parseApiError(429, { code: 'CREATE_QUOTA_EXCEEDED', limit: 10, retryAfter: 60 })
+    expect(toFormState(quota)).toEqual({ error: quota.message })
   })
 })
