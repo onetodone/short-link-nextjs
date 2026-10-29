@@ -4,6 +4,28 @@ import { ApiError } from '@/lib/api/errors'
 import { networkError, parseApiError, readErrorBody } from '@/lib/api/problem'
 
 describe('parseApiError', () => {
+  it('maps a 429 EMAIL_COOLDOWN to a wait message and keeps retryAfter', () => {
+    const error = parseApiError(429, { code: 'EMAIL_COOLDOWN', retryAfter: 42, message: 'An email was sent recently' })
+
+    expect(error.code).toBe('EMAIL_COOLDOWN')
+    expect(error.retryAfter).toBe(42)
+    expect(error.message).toBe('We sent you an email recently. You can ask for another in about a minute.')
+    expect(parseApiError(429, { code: 'EMAIL_COOLDOWN' }).message).toBe(
+      'We sent you an email recently. Please wait a minute.',
+    )
+  })
+
+  it('maps verification codes to front-owned messages', () => {
+    const notVerified = parseApiError(403, { code: 'EMAIL_NOT_VERIFIED', message: 'Confirm your email address' })
+    expect(notVerified.code).toBe('EMAIL_NOT_VERIFIED')
+    expect(notVerified.message).toBe('Confirm your email address to create or edit links.')
+
+    const invalid = parseApiError(400, { code: 'INVALID_TOKEN', message: 'This link is invalid or has expired' })
+    expect(invalid.code).toBe('INVALID_TOKEN')
+    expect(invalid.message).toBe('This link is invalid or has expired.')
+    expect(invalid.issues).toBeUndefined()
+  })
+
   it('maps 429 to a throttle error regardless of the body', () => {
     const error = parseApiError(429, { message: 'ThrottlerException: Too Many Requests' })
 

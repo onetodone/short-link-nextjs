@@ -30,7 +30,7 @@ local component state.
 - Node.js 22+ (CI runs on 26)
 - [pnpm](https://pnpm.io) — the version is pinned via `packageManager`; run
   `corepack enable` to have it picked up automatically
-- **The `short-link-api` API (1.4.0 or newer) running and reachable.** It needs PostgreSQL and Redis; see that
+- **The `short-link-api` API (1.5.0 or newer) running and reachable.** It needs PostgreSQL and Redis; see that
   project's README for how to start it. Quick check:
 
   ```bash
@@ -92,6 +92,21 @@ in an `HttpOnly; SameSite=Strict; Path=/api/v1/auth` cookie.
   (the profile also offers "Sign out everywhere" → `POST /api/v1/auth/logout-all`)
   and then always drops the in-memory token and redirects to `/login`.
 
+### Email verification and password reset
+
+The API emails links to `/verify-email?token=…` and `/reset-password?token=…` on this app
+(the API's `APP_URL`). Both pages are public and send `Referrer-Policy: no-referrer`.
+
+- New accounts can sign in at once but can't create or edit links until the address is confirmed
+  (`403 EMAIL_NOT_VERIFIED`). The cabinet shows a banner with "Resend email" (one email per
+  minute, `429 EMAIL_COOLDOWN`) and disables the link form's submit button.
+- `/verify-email` posts the token once and goes to the cabinet (signed in) or `/login`. An
+  expired or used link offers a new one. Other open tabs pick up the confirmation over the
+  `BroadcastChannel`; a tab returning to the foreground re-checks `GET /auth/me`.
+- `/forgot-password` always answers "check your inbox", so it doesn't reveal which emails have
+  accounts. `/reset-password` sets the new password; the API revokes every session, so the app
+  clears the local session in all tabs and sends you to `/login`.
+
 ## Deployment — runtime environment
 
 Set at runtime (not baked into the build):
@@ -151,11 +166,12 @@ domain, or every copied short link will be wrong.
   fires the server call with the in-memory access token and always clears the
   local session, so a network failure (or a dropped access token) still signs
   you out locally while leaving the server session to expire on its own.
-- **Profile is read-only** — no name / email / password change, no verification.
+- **Profile is read-only** — no name, email or password change from a signed-in session.
 - **No custom short codes** — `POST /urls` accepts only `{ url, note }`; edit
   changes the destination and the note, never the code.
-- **Auth throttle** — `/auth/{register,login,refresh}` are limited to 10 req/60 s
-  per client, each route separately; surfaced with friendly copy.
+- **Auth throttle** — `/auth/{register,login}` and the verification and password
+  routes are limited to 10 req/60 s per client, each route separately; surfaced
+  with friendly copy.
 - **Destination rules and daily quota** — the API rejects destinations with
   credentials, IP addresses, local hosts, other short links or URL shorteners
   (`422 DESTINATION_REJECTED`, shown on the URL field), and caps each account
@@ -181,7 +197,7 @@ domain, or every copied short link will be wrong.
 src/app/                 Routes (App Router). (app)/ = protected client group.
 src/components/ui/        shadcn primitives
 src/components/urls/      link-cabinet components
-src/components/auth/      session-expiry listener
+src/components/auth/      session-expiry listener, verification banner
 src/components/theme/     next-themes provider + toggle
 src/lib/api/              typed API client (public / bearer / error mapping)
 src/lib/auth/             token store, shared refresh, context, guard, jwt decode

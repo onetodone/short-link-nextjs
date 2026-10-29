@@ -6,6 +6,7 @@ import { AuthGuard } from '@/lib/auth/guard'
 import { SiteHeader } from '@/components/site-header'
 import { SiteHeaderSkeleton } from '@/components/site-header-skeleton'
 import { SiteFooter } from '@/components/site-footer'
+import { VerifyEmailBanner } from '@/components/auth/verify-email-banner'
 import {
   DashboardBodySkeleton,
   EditUrlBodySkeleton,
@@ -25,6 +26,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         Skip to content
       </a>
       <SiteHeader />
+      <VerifyEmailBanner />
       <main id="main-content" tabIndex={-1} className={MAIN_CLASS}>
         {children}
       </main>

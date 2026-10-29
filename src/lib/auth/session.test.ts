@@ -25,7 +25,7 @@ function token(name: string): string {
   return `${name}.e30.sig`
 }
 
-const user = { id: 'u1', email: 'ann@example.com' }
+const user = { id: 'u1', email: 'ann@example.com', emailVerified: false }
 
 function json(status: number, body: unknown, headers?: Record<string, string>): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json', ...headers } })
@@ -287,6 +287,55 @@ describe('cross-tab broadcast', () => {
 
     expect(tokenStore.getAccessToken()).toBe(token('other'))
     expect(session.getSessionSnapshot().user).toEqual(user)
+    expect(channel.posted).toEqual([])
+  })
+
+  it('clearLocalSession clears memory and broadcasts without calling the API', async () => {
+    const { session, tokenStore, channel } = await load()
+    session.adopt(authResponse('live'), false)
+
+    session.clearLocalSession()
+
+    expect(tokenStore.getAccessToken()).toBeNull()
+    expect(session.getSessionSnapshot().user).toBeNull()
+    expect(channel.posted).toEqual([{ type: 'clear' }])
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('updateSessionUser replaces the signed-in user and broadcasts it', async () => {
+    const { session, tokenStore, channel } = await load()
+    session.adopt(authResponse('live'), false)
+    const verified = { ...user, emailVerified: true }
+
+    session.updateSessionUser(verified)
+
+    expect(session.getSessionSnapshot().user).toEqual(verified)
+    expect(tokenStore.getAccessToken()).toBe(token('live'))
+    expect(channel.posted).toEqual([{ type: 'user', user: verified }])
+  })
+
+  it('updateSessionUser ignores another account and a signed-out tab', async () => {
+    const { session, channel } = await load()
+
+    session.updateSessionUser({ ...user, emailVerified: true })
+    expect(session.getSessionSnapshot().user).toBeNull()
+
+    session.adopt(authResponse('live'), false)
+    session.updateSessionUser({ id: 'u2', email: 'bob@example.com', emailVerified: true })
+
+    expect(session.getSessionSnapshot().user).toEqual(user)
+    expect(channel.posted).toEqual([])
+  })
+
+  it('a user update from another tab applies only to the same account', async () => {
+    const { session, channel } = await load()
+    session.adopt(authResponse('live'), false)
+
+    channel.receive({ type: 'user', user: { id: 'u2', email: 'bob@example.com', emailVerified: true } })
+    expect(session.getSessionSnapshot().user).toEqual(user)
+
+    channel.receive({ type: 'user', user: { ...user, emailVerified: true } })
+    expect(session.getSessionSnapshot().user).toEqual({ ...user, emailVerified: true })
     expect(channel.posted).toEqual([])
   })
 })

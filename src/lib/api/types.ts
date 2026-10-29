@@ -1,6 +1,7 @@
 export interface AuthUser {
   id: string
   email: string
+  emailVerified: boolean
 }
 
 export interface AuthResponse {
@@ -11,6 +12,7 @@ export interface AuthResponse {
 export interface Me {
   id: string
   email: string
+  emailVerified: boolean
   createdAt: string
 }
 

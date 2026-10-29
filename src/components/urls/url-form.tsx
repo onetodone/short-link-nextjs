@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import type { FormState } from '@/lib/forms'
 import { useActionResult } from '@/hooks/use-action-result'
 import { createUrlAction, makeUpdateUrlAction } from '@/lib/actions/url-actions'
+import { useAuth } from '@/lib/auth/context'
 import { MAX_NOTE_LENGTH } from '@/schemas/url'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -23,6 +24,8 @@ interface UrlFormProps {
 
 export function UrlForm({ mode, shortCode, defaultUrl = '', defaultNote = '' }: UrlFormProps) {
   const router = useRouter()
+  const { user } = useAuth()
+  const unverified = user !== null && !user.emailVerified
   const [url, setUrl] = useState(defaultUrl)
   const [note, setNote] = useState(defaultNote)
 
@@ -94,11 +97,17 @@ export function UrlForm({ mode, shortCode, defaultUrl = '', defaultNote = '' }: 
               </FieldContent>
             </Field>
             {state?.error && !state.fieldErrors && <FieldError>{state.error}</FieldError>}
+            {unverified && (
+              <FieldDescription>
+                Confirm your email address to {mode === 'create' ? 'create' : 'edit'} links — use the link we emailed
+                you, or resend it from the banner above.
+              </FieldDescription>
+            )}
             <div className="flex justify-end gap-2">
               <Button type="button" variant="ghost" nativeButton={false} render={<Link href="/" />}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={pending}>
+              <Button type="submit" disabled={pending || unverified}>
                 {pending ? pendingLabel : submitLabel}
               </Button>
             </div>
