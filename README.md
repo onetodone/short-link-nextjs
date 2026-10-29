@@ -30,7 +30,7 @@ local component state.
 - Node.js 22+ (CI runs on 26)
 - [pnpm](https://pnpm.io) — the version is pinned via `packageManager`; run
   `corepack enable` to have it picked up automatically
-- **The `short-link-api` API (1.3.0 or newer) running and reachable.** It needs PostgreSQL and Redis; see that
+- **The `short-link-api` API (1.4.0 or newer) running and reachable.** It needs PostgreSQL and Redis; see that
   project's README for how to start it. Quick check:
 
   ```bash
@@ -156,6 +156,11 @@ domain, or every copied short link will be wrong.
   changes the destination and the note, never the code.
 - **Auth throttle** — `/auth/{register,login,refresh}` are limited to 10 req/60 s
   per client, each route separately; surfaced with friendly copy.
+- **Destination rules and daily quota** — the API rejects destinations with
+  credentials, IP addresses, local hosts, other short links or URL shorteners
+  (`422 DESTINATION_REJECTED`, shown on the URL field), and caps each account
+  at a number of new links per 24 h (`429 CREATE_QUOTA_EXCEEDED`, 10 by
+  default, shown with the wait time). The form doesn't pre-check either.
 
 ## Scripts
 

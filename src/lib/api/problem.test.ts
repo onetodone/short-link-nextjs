@@ -13,6 +13,56 @@ describe('parseApiError', () => {
     expect(error.message).toBe('Too many attempts. Please wait a minute and try again.')
   })
 
+  it('maps a 429 CREATE_QUOTA_EXCEEDED to a quota message with the limit and wait', () => {
+    const error = parseApiError(429, {
+      message: 'You can create at most 10 links per 24 hours',
+      code: 'CREATE_QUOTA_EXCEEDED',
+      limit: 10,
+      retryAfter: 3 * 3600 - 100,
+    })
+
+    expect(error.code).toBe('CREATE_QUOTA_EXCEEDED')
+    expect(error.message).toBe("You've reached the limit of 10 new links per 24 hours. Try again in about 3 hours.")
+    expect(error.issues).toBeUndefined()
+  })
+
+  it('formats the quota wait in minutes and tolerates missing fields', () => {
+    const body = { code: 'CREATE_QUOTA_EXCEEDED', limit: 10 }
+
+    expect(parseApiError(429, { ...body, retryAfter: 30 }).message).toContain('Try again in about a minute.')
+    expect(parseApiError(429, { ...body, retryAfter: 1500 }).message).toContain('Try again in about 25 minutes.')
+    expect(parseApiError(429, { ...body, retryAfter: 3600 }).message).toContain('Try again in about an hour.')
+    expect(parseApiError(429, { code: 'CREATE_QUOTA_EXCEEDED' }).message).toBe(
+      "You've reached the limit of new links per 24 hours. Try again later.",
+    )
+  })
+
+  it.each([
+    ['CREDENTIALS_IN_URL', 'Remove the username and password from the URL.'],
+    ['IP_ADDRESS', 'Use a domain name instead of an IP address.'],
+    ['LOCAL_HOST', 'Use a public domain — local and internal addresses are not allowed.'],
+    ['OWN_DOMAIN', 'This is already a short link. Use the address it points to instead.'],
+    ['URL_SHORTENER', 'Links to other URL shorteners or redirectors are not allowed. Use the final address instead.'],
+  ])('maps a 422 DESTINATION_REJECTED %s to a url issue', (reason, message) => {
+    const error = parseApiError(422, { message: 'API copy', code: 'DESTINATION_REJECTED', reason })
+
+    expect(error.status).toBe(422)
+    expect(error.code).toBe('DESTINATION_REJECTED')
+    expect(error.message).toBe(message)
+    expect(error.issues).toEqual([{ path: 'url', message }])
+  })
+
+  it('falls back to the API message for an unknown destination reason', () => {
+    const error = parseApiError(422, { message: 'API copy', code: 'DESTINATION_REJECTED', reason: 'constructor' })
+    expect(error.issues).toEqual([{ path: 'url', message: 'API copy' }])
+
+    expect(parseApiError(422, { code: 'DESTINATION_REJECTED' }).message).toBe('This destination URL is not allowed.')
+  })
+
+  it('prefers the API code over the error name', () => {
+    expect(parseApiError(403, { message: 'x', error: 'Forbidden', code: 'SOME_CODE' }).code).toBe('SOME_CODE')
+  })
+
   it('maps a 400 with errors[] to validation issues', () => {
     const error = parseApiError(400, {
       message: 'Validation failed',
