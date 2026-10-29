@@ -13,6 +13,7 @@ must be running for this app to do anything useful.
 - [Tailwind CSS v4](https://tailwindcss.com) + [shadcn/ui](https://ui.shadcn.com) on [Base UI](https://base-ui.com) + [lucide-react](https://lucide.dev) + [sonner](https://sonner.emilkowal.ski)
 - [Zod](https://zod.dev) for form + URL validation (lenient — the API's `400` is the source of truth)
 - [next-themes](https://github.com/pacocoursey/next-themes) for light/dark
+- [Vitest](https://vitest.dev) unit tests, colocated as `src/**/*.test.ts`
 - **Client-side auth against the API** — a short-lived access JWT held **in
   browser memory only** (never `localStorage` / `sessionStorage` / a
   JS-readable cookie), renewed via an `HttpOnly` refresh cookie. Every browser
@@ -169,6 +170,7 @@ domain, or every copied short link will be wrong.
 | `pnpm lint`      | Run ESLint with autofix.                 |
 | `pnpm lint:ci`   | Run ESLint without autofix (as CI does). |
 | `pnpm typecheck` | `next typegen` + `tsc --noEmit`.         |
+| `pnpm test`      | Run the Vitest unit tests once.          |
 | `pnpm format`    | Format the codebase with Prettier.       |
 
 ## Project structure
@@ -188,7 +190,7 @@ next.config.ts            rewrites proxy + security headers (CSP connect-src 'se
 src/proxy.ts              adds the client-IP headers to the /api/v1 hop
 ```
 
-CI (`.github/workflows/ci.yml`): install → `lint:ci` → `typecheck` → `build`.
+CI (`.github/workflows/ci.yml`): install → `format:check` → `lint:ci` → `typecheck` → `test` → `build`.
 
 ## License
 
