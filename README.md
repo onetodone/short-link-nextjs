@@ -1,10 +1,10 @@
 # Short Link — Frontend
 
-A signed-in cabinet for the **short-link** API: create, list, edit, and delete
+A signed-in cabinet for the **short-link-api** API: create, list, edit, and delete
 your own short links and see per-link click counts.
 
 This is a **frontend only** — a Next.js client. It has **no database and no
-backend of its own**; it talks to the separate `short-link` NestJS API. That API
+backend of its own**; it talks to the separate `short-link-api` NestJS API. That API
 must be running for this app to do anything useful.
 
 ## Tech stack
@@ -28,7 +28,7 @@ local component state.
 - Node.js 22+ (CI runs on 26)
 - [pnpm](https://pnpm.io) — the version is pinned via `packageManager`; run
   `corepack enable` to have it picked up automatically
-- **The `short-link` API running and reachable.** It needs PostgreSQL and Redis; see that
+- **The `short-link-api` API running and reachable.** It needs PostgreSQL and Redis; see that
   project's README for how to start it. Quick check:
 
   ```bash
