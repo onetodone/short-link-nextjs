@@ -13,7 +13,7 @@ import { Separator } from '@/components/ui/separator'
 export function UrlCard({ url, onDeleted }: { url: UrlSummary; onDeleted: () => void }) {
   return (
     <Card className="gap-3 px-4">
-      <div className="flex min-w-0 flex-col gap-1">
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
         <a
           href={url.shortUrl}
           target="_blank"
@@ -28,7 +28,7 @@ export function UrlCard({ url, onDeleted }: { url: UrlSummary; onDeleted: () => 
           {url.originalUrl}
         </span>
         {url.note && <p className="line-clamp-2 text-sm break-words whitespace-pre-line">{url.note}</p>}
-        <span className="mt-1 text-xs text-muted-foreground">
+        <span className="mt-auto pt-1 text-xs text-muted-foreground">
           <strong className="text-foreground">{url.clicks}</strong> {url.clicks === 1 ? 'click' : 'clicks'}
           <span className="px-1">·</span>
           {formatDate(url.createdAt)}
