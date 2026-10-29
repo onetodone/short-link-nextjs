@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { ExternalLinkIcon, PencilIcon } from 'lucide-react'
 import type { UrlSummary } from '@/lib/api/types'
 import { formatDate, stripScheme } from '@/lib/format'
-import { stashOriginalUrl } from '@/components/urls/url-nav-state'
 import { CopyButton } from '@/components/urls/copy-button'
 import { DeleteUrlDialog } from '@/components/urls/delete-url-dialog'
 import { Card } from '@/components/ui/card'
@@ -28,6 +27,7 @@ export function UrlCard({ url, onDeleted }: { url: UrlSummary; onDeleted: () => 
         <span className="truncate text-muted-foreground" title={url.originalUrl}>
           {url.originalUrl}
         </span>
+        {url.note && <p className="line-clamp-2 text-sm break-words whitespace-pre-line">{url.note}</p>}
         <span className="mt-1 text-xs text-muted-foreground">
           <strong className="text-foreground">{url.clicks}</strong> {url.clicks === 1 ? 'click' : 'clicks'}
           <span className="px-1">·</span>
@@ -41,9 +41,8 @@ export function UrlCard({ url, onDeleted }: { url: UrlSummary; onDeleted: () => 
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label="Edit destination"
+            aria-label="Edit short link"
             nativeButton={false}
-            onClick={() => stashOriginalUrl(url.shortCode, url.originalUrl)}
             render={<Link href={`/urls/${url.shortCode}/edit`} />}
           >
             <PencilIcon />

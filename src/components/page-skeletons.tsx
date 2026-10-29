@@ -27,13 +27,15 @@ export function NewUrlBodySkeleton() {
   )
 }
 
+export const EDIT_URL_HEADER = {
+  title: 'Edit short link',
+  description: 'Change where this short link points or its note. The short link itself stays the same.',
+}
+
 export function EditUrlBodySkeleton() {
   return (
     <PageContainer width="3xl">
-      <PageHeader
-        title="Edit short link"
-        description="Change where this short link points. The short link itself stays the same."
-      />
+      <PageHeader title={EDIT_URL_HEADER.title} description={EDIT_URL_HEADER.description} />
       <UrlFormSkeleton />
     </PageContainer>
   )

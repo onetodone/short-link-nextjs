@@ -1,7 +1,8 @@
 # Short Link — Frontend
 
 A signed-in cabinet for the **short-link-api** API: create, list, edit, and delete
-your own short links and see per-link click counts.
+your own short links, keep a private note on each, and see per-link click counts
+(bots and link previews excluded).
 
 This is a **frontend only** — a Next.js client. It has **no database and no
 backend of its own**; it talks to the separate `short-link-api` NestJS API. That API
@@ -29,7 +30,7 @@ local component state.
 - Node.js 22+ (CI runs on 26)
 - [pnpm](https://pnpm.io) — the version is pinned via `packageManager`; run
   `corepack enable` to have it picked up automatically
-- **The `short-link-api` API running and reachable.** It needs PostgreSQL and Redis; see that
+- **The `short-link-api` API (1.3.0 or newer) running and reachable.** It needs PostgreSQL and Redis; see that
   project's README for how to start it. Quick check:
 
   ```bash
@@ -150,13 +151,9 @@ domain, or every copied short link will be wrong.
   fires the server call with the in-memory access token and always clears the
   local session, so a network failure (or a dropped access token) still signs
   you out locally while leaving the server session to expire on its own.
-- **No `GET /urls/:shortCode`** — the edit page hydrates the destination field
-  from navigation state (`sessionStorage`), falling back to a bounded list scan
-  on a cold / deep-linked load.
 - **Profile is read-only** — no name / email / password change, no verification.
-- **No custom short codes** — `POST /urls` accepts only `{ url }`; edit changes
-  only the destination.
-- **Click counts lag** the live value by up to ~5 s (`CLICKS_FLUSH_INTERVAL_MS`).
+- **No custom short codes** — `POST /urls` accepts only `{ url, note }`; edit
+  changes the destination and the note, never the code.
 - **Auth throttle** — `/auth/{register,login,refresh}` are limited to 10 req/60 s
   per client, each route separately; surfaced with friendly copy.
 

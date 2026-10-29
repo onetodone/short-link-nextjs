@@ -63,6 +63,9 @@ export function UrlList({ page }: { page: number }) {
         ))}
       </div>
       <Pagination page={page} total={data.total} pageSize={URLS_PAGE_SIZE} />
+      <p className="text-center text-xs text-muted-foreground">
+        Clicks exclude bots and link previews; counts update within a few seconds.
+      </p>
     </div>
   )
 }
