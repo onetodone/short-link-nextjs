@@ -47,6 +47,10 @@ export function ProfileView() {
           <CardContent className="flex flex-col gap-6">
             <dl className="flex flex-col gap-4">
               <Row label="Email" value={email} />
+              <Row
+                label="Email status"
+                value={(data?.emailVerified ?? user?.emailVerified) ? 'Confirmed' : 'Not confirmed yet'}
+              />
               <Row label="Member since" value={data ? formatDate(data.createdAt) : '—'} />
               <Row label="Account ID" value={data?.id ?? '—'} mono />
             </dl>

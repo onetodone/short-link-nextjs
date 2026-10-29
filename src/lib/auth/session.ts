@@ -56,7 +56,8 @@ function emitExpired(): void {
 const channel: BroadcastChannel | null =
   typeof window !== 'undefined' && typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel(CHANNEL_NAME) : null
 
-type BroadcastMessage = { type: 'token'; accessToken: string; user: AuthUser } | { type: 'clear' }
+type BroadcastMessage =
+  { type: 'token'; accessToken: string; user: AuthUser } | { type: 'user'; user: AuthUser } | { type: 'clear' }
 
 if (channel) {
   channel.onmessage = (event: MessageEvent<BroadcastMessage>) => {
@@ -70,6 +71,8 @@ if (channel) {
       setAccessToken(message.accessToken)
       setSnapshot({ user: message.user })
       scheduleProactiveRefresh(message.accessToken)
+    } else if (message?.type === 'user') {
+      if (snapshot.user?.id === message.user.id) setSnapshot({ user: message.user })
     }
   }
 }
@@ -124,6 +127,22 @@ function revokeOnServer(path: string, accessToken: string | null): void {
     headers: { Authorization: `Bearer ${accessToken}` },
     keepalive: true,
   }).catch(() => {})
+}
+
+/**
+ * Replaces the signed-in user's details (e.g. after the email address is confirmed) in this tab
+ * and the others. Ignored when nobody, or a different account, is signed in.
+ */
+export function updateSessionUser(user: AuthUser): void {
+  if (snapshot.user?.id !== user.id) return
+  setSnapshot({ user })
+  channel?.postMessage({ type: 'user', user } satisfies BroadcastMessage)
+}
+
+/** Drops the session in every tab without calling the API — for when the API has already revoked it. */
+export function clearLocalSession(): void {
+  applyClear()
+  channel?.postMessage({ type: 'clear' } satisfies BroadcastMessage)
 }
 
 export function logout(): void {

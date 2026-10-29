@@ -7,12 +7,15 @@ interface ApiErrorInit {
   status: number
   code?: string
   issues?: ApiIssue[]
+  retryAfter?: number
 }
 
 export class ApiError extends Error {
   readonly status: number
   readonly code?: string
   readonly issues?: ApiIssue[]
+  /** Seconds until the action may be tried again, when the API says so. */
+  readonly retryAfter?: number
 
   constructor(message: string, init: ApiErrorInit) {
     super(message)
@@ -20,6 +23,7 @@ export class ApiError extends Error {
     this.status = init.status
     this.code = init.code
     this.issues = init.issues
+    this.retryAfter = init.retryAfter
   }
 }
 

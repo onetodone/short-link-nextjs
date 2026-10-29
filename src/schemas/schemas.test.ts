@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { loginSchema, registerSchema } from '@/schemas/auth'
+import { forgotPasswordSchema, loginSchema, registerSchema, resetPasswordSchema } from '@/schemas/auth'
 import { SHORT_CODE_PATTERN, urlSchema } from '@/schemas/url'
 
 function firstMessage(result: { success: boolean; error?: { issues: { message: string }[] } }): string | undefined {
@@ -61,6 +61,35 @@ describe('urlSchema', () => {
     expect(urlSchema.safeParse({ url, note: ` ${'n'.repeat(200)} ` }).success).toBe(true)
     expect(firstMessage(urlSchema.safeParse({ url, note: 'n'.repeat(201) }))).toBe(
       'Note must be at most 200 characters.',
+    )
+  })
+})
+
+describe('forgotPasswordSchema', () => {
+  it('normalizes the email', () => {
+    expect(forgotPasswordSchema.parse({ email: ' Ann@Example.com ' })).toEqual({ email: 'ann@example.com' })
+    expect(firstMessage(forgotPasswordSchema.safeParse({ email: 'nope' }))).toBe('Please enter a valid email address.')
+  })
+})
+
+describe('resetPasswordSchema', () => {
+  const valid = { token: 't0ken', password: 'password123', confirmPassword: 'password123' }
+
+  it('accepts matching passwords', () => {
+    expect(resetPasswordSchema.parse(valid)).toEqual(valid)
+  })
+
+  it('rejects a mismatch on confirmPassword', () => {
+    const result = resetPasswordSchema.safeParse({ ...valid, confirmPassword: 'password124' })
+    expect(result.error?.issues[0]).toMatchObject({ path: ['confirmPassword'], message: 'Passwords do not match.' })
+  })
+
+  it('requires the token and a long enough password', () => {
+    expect(firstMessage(resetPasswordSchema.safeParse({ ...valid, token: '' }))).toBe(
+      'This link is incomplete. Request a new one.',
+    )
+    expect(firstMessage(resetPasswordSchema.safeParse({ ...valid, password: 'short', confirmPassword: 'short' }))).toBe(
+      'Password must be at least 8 characters.',
     )
   })
 })

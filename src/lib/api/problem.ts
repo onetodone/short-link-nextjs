@@ -12,6 +12,11 @@ const DESTINATION_MESSAGES: Record<string, string> = {
   URL_SHORTENER: 'Links to other URL shorteners or redirectors are not allowed. Use the final address instead.',
 }
 
+const CODE_MESSAGES: Record<string, string> = {
+  EMAIL_NOT_VERIFIED: 'Confirm your email address to create or edit links.',
+  INVALID_TOKEN: 'This link is invalid or has expired.',
+}
+
 const STATUS_FALLBACK: Record<number, string> = {
   400: 'The request was invalid.',
   401: 'You need to sign in to do that.',
@@ -44,6 +49,15 @@ function quotaMessage(limit: unknown, retryAfter: unknown): string {
   return `You've reached the limit of ${cap} per 24 hours. ${wait}`
 }
 
+function positiveSeconds(value: unknown): number | undefined {
+  return typeof value === 'number' && value > 0 ? value : undefined
+}
+
+function cooldownMessage(retryAfter: number | undefined): string {
+  const wait = retryAfter ? `You can ask for another in ${formatWait(retryAfter)}.` : 'Please wait a minute.'
+  return `We sent you an email recently. ${wait}`
+}
+
 export function networkError(): ApiError {
   return new ApiError(NETWORK_MESSAGE, { status: 0, code: 'NETWORK' })
 }
@@ -60,14 +74,19 @@ export async function readErrorBody(res: Response): Promise<unknown> {
 /**
  * Turns an API error response into an `ApiError`. `code` is the API's machine-readable `code` when
  * present (a rejected destination also becomes a `url` issue), otherwise Nest's `error` name.
+ * `retryAfter` carries the API's wait in seconds for the quota and email cooldown errors.
  */
 export function parseApiError(status: number, body: unknown): ApiError {
   const record = isRecord(body) ? body : {}
   const code = typeof record.code === 'string' ? record.code : undefined
 
   if (status === 429) {
+    const retryAfter = positiveSeconds(record.retryAfter)
     if (code === 'CREATE_QUOTA_EXCEEDED') {
-      return new ApiError(quotaMessage(record.limit, record.retryAfter), { status, code })
+      return new ApiError(quotaMessage(record.limit, record.retryAfter), { status, code, retryAfter })
+    }
+    if (code === 'EMAIL_COOLDOWN') {
+      return new ApiError(cooldownMessage(retryAfter), { status, code, retryAfter })
     }
     return new ApiError(THROTTLE_MESSAGE, { status, code: 'THROTTLED' })
   }
@@ -77,6 +96,10 @@ export function parseApiError(status: number, body: unknown): ApiError {
     const apiMessage = typeof record.message === 'string' ? record.message : DESTINATION_FALLBACK
     const message = reason && Object.hasOwn(DESTINATION_MESSAGES, reason) ? DESTINATION_MESSAGES[reason] : apiMessage
     return new ApiError(message, { status, code, issues: [{ path: 'url', message }] })
+  }
+
+  if (code && Object.hasOwn(CODE_MESSAGES, code)) {
+    return new ApiError(CODE_MESSAGES[code], { status, code })
   }
 
   if (status === 400 && Array.isArray(record.errors)) {
