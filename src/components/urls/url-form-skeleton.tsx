@@ -10,6 +10,11 @@ export function UrlFormSkeleton() {
           <Skeleton className="h-8 w-full" />
           <Skeleton className="h-3 w-56" />
         </div>
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-4 w-28" />
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-3 w-32" />
+        </div>
         <div className="flex justify-end gap-2">
           <Skeleton className="h-8 w-20" />
           <Skeleton className="h-8 w-36" />

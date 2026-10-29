@@ -5,15 +5,15 @@ import { createUrl, updateUrl } from '@/lib/api/urls'
 import { runFormAction, type FormState } from '@/lib/forms'
 import { urlSchema } from '@/schemas/url'
 
-export const createUrlAction = runFormAction(urlSchema, async ({ url }): Promise<FormState> => {
-  await createUrl(url)
+export const createUrlAction = runFormAction(urlSchema, async ({ url, note }): Promise<FormState> => {
+  await createUrl({ url, note: note || null })
   return { success: true }
 })
 
 export function makeUpdateUrlAction(shortCode: string) {
-  return runFormAction(urlSchema, async ({ url }): Promise<FormState> => {
+  return runFormAction(urlSchema, async ({ url, note }): Promise<FormState> => {
     try {
-      await updateUrl(shortCode, url)
+      await updateUrl(shortCode, { url, note: note || null })
     } catch (error) {
       // 404 = unknown code or not the owner — the link is gone from under us.
       if (error instanceof ApiError && error.status === 404) {

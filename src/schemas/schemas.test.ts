@@ -53,6 +53,16 @@ describe('urlSchema', () => {
       'URL must be at most 2048 characters.',
     )
   })
+
+  it('trims an optional note and caps it at 200 characters', () => {
+    const url = 'https://example.com'
+    expect(urlSchema.parse({ url, note: '  launch post  ' })).toEqual({ url, note: 'launch post' })
+    expect(urlSchema.parse({ url, note: '   ' })).toEqual({ url, note: '' })
+    expect(urlSchema.safeParse({ url, note: ` ${'n'.repeat(200)} ` }).success).toBe(true)
+    expect(firstMessage(urlSchema.safeParse({ url, note: 'n'.repeat(201) }))).toBe(
+      'Note must be at most 200 characters.',
+    )
+  })
 })
 
 describe('SHORT_CODE_PATTERN', () => {

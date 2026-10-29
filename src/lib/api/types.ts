@@ -18,6 +18,7 @@ export interface UrlSummary {
   shortCode: string
   shortUrl: string
   originalUrl: string
+  note: string | null
   clicks: number
   createdAt: string
   updatedAt: string
@@ -27,6 +28,7 @@ export interface CreatedUrl {
   shortCode: string
   shortUrl: string
   originalUrl: string
+  note: string | null
   createdAt: string
   updatedAt: string
 }

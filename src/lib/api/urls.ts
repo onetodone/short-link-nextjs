@@ -3,33 +3,34 @@ import type { CreatedUrl, UrlList, UrlSummary } from '@/lib/api/types'
 
 export const URLS_PAGE_SIZE = 12
 
+/** Fields sent when creating or editing a link; a `null` note clears it. */
+export interface UrlChanges {
+  url: string
+  note: string | null
+}
+
 export function listUrls(page: number): Promise<UrlList> {
   const offset = Math.max(0, (page - 1) * URLS_PAGE_SIZE)
   const query = new URLSearchParams({ limit: String(URLS_PAGE_SIZE), offset: String(offset) })
   return apiFetch<UrlList>(`/urls?${query.toString()}`)
 }
 
-export function createUrl(url: string): Promise<CreatedUrl> {
-  return apiFetch<CreatedUrl>('/urls', { method: 'POST', body: JSON.stringify({ url }) })
+/** Loads one of the caller's links; `404` when it doesn't exist or belongs to someone else. */
+export function getUrl(shortCode: string): Promise<UrlSummary> {
+  return apiFetch<UrlSummary>(`/urls/${encodeURIComponent(shortCode)}`)
 }
 
-export function updateUrl(shortCode: string, url: string): Promise<UrlSummary> {
+export function createUrl(changes: UrlChanges): Promise<CreatedUrl> {
+  return apiFetch<CreatedUrl>('/urls', { method: 'POST', body: JSON.stringify(changes) })
+}
+
+export function updateUrl(shortCode: string, changes: UrlChanges): Promise<UrlSummary> {
   return apiFetch<UrlSummary>(`/urls/${encodeURIComponent(shortCode)}`, {
     method: 'PATCH',
-    body: JSON.stringify({ url }),
+    body: JSON.stringify(changes),
   })
 }
 
 export function deleteUrl(shortCode: string): Promise<void> {
   return apiFetch<void>(`/urls/${encodeURIComponent(shortCode)}`, { method: 'DELETE', body: '{}' })
-}
-
-export async function findOriginalUrl(shortCode: string, maxPages = 10): Promise<string | null> {
-  for (let page = 1; page <= maxPages; page++) {
-    const { items, total, limit, offset } = await listUrls(page)
-    const hit = items.find((item) => item.shortCode === shortCode)
-    if (hit) return hit.originalUrl
-    if (items.length === 0 || offset + limit >= total) break
-  }
-  return null
 }

@@ -6,10 +6,11 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import type { FormState } from '@/lib/forms'
 import { useActionResult } from '@/hooks/use-action-result'
-import { clearStashedOriginalUrl } from '@/components/urls/url-nav-state'
 import { createUrlAction, makeUpdateUrlAction } from '@/lib/actions/url-actions'
+import { MAX_NOTE_LENGTH } from '@/schemas/url'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent } from '@/components/ui/card'
 import { Field, FieldContent, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 
@@ -17,11 +18,13 @@ interface UrlFormProps {
   mode: 'create' | 'edit'
   shortCode?: string
   defaultUrl?: string
+  defaultNote?: string
 }
 
-export function UrlForm({ mode, shortCode, defaultUrl = '' }: UrlFormProps) {
+export function UrlForm({ mode, shortCode, defaultUrl = '', defaultNote = '' }: UrlFormProps) {
   const router = useRouter()
   const [url, setUrl] = useState(defaultUrl)
+  const [note, setNote] = useState(defaultNote)
 
   const action = useMemo(
     () => (mode === 'edit' ? makeUpdateUrlAction(shortCode ?? '') : createUrlAction),
@@ -31,13 +34,13 @@ export function UrlForm({ mode, shortCode, defaultUrl = '' }: UrlFormProps) {
 
   useActionResult(state, {
     onSuccess: () => {
-      if (mode === 'edit' && shortCode) clearStashedOriginalUrl(shortCode)
-      toast.success(mode === 'create' ? 'Short link created.' : 'Destination updated.')
+      toast.success(mode === 'create' ? 'Short link created.' : 'Short link updated.')
       router.push(mode === 'create' ? '/?page=1' : '/')
     },
   })
 
   const fieldError = state?.fieldErrors?.url
+  const noteError = state?.fieldErrors?.note
   const submitLabel = mode === 'create' ? 'Create short link' : 'Save changes'
   const pendingLabel = mode === 'create' ? 'Creating...' : 'Saving...'
 
@@ -69,6 +72,25 @@ export function UrlForm({ mode, shortCode, defaultUrl = '' }: UrlFormProps) {
                     : 'The short link stays the same — only where it points changes.'}
                 </FieldDescription>
                 {fieldError && <FieldError>{fieldError}</FieldError>}
+              </FieldContent>
+            </Field>
+            <Field data-invalid={Boolean(noteError)}>
+              <FieldLabel htmlFor="note">Note (optional)</FieldLabel>
+              <FieldContent>
+                <Textarea
+                  id="note"
+                  name="note"
+                  rows={2}
+                  maxLength={MAX_NOTE_LENGTH}
+                  placeholder="What this link is for"
+                  value={note}
+                  onChange={(event) => setNote(event.target.value)}
+                  aria-invalid={Boolean(noteError)}
+                />
+                <FieldDescription>
+                  Only you see it. {note.length}/{MAX_NOTE_LENGTH}
+                </FieldDescription>
+                {noteError && <FieldError>{noteError}</FieldError>}
               </FieldContent>
             </Field>
             {state?.error && !state.fieldErrors && <FieldError>{state.error}</FieldError>}
