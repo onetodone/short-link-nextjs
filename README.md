@@ -54,6 +54,7 @@ local component state.
    | `PORT`                | Port the dev/start server listens on. Preloaded via `dotenv-cli` in `dev`/`start`.                                                                            |
    | `API_ORIGIN`          | **Server-only** origin of the API for the rewrites proxy. Never `NEXT_PUBLIC_`. The proxy hop is server-side; in production this is the API's _internal_ URL. |
    | `NEXT_PUBLIC_APP_URL` | Public base URL this app is served at (`metadataBase`).                                                                                                       |
+   | `API_PROXY_SECRET`    | **Server-only**, optional. Same value as the API's `FRONT_PROXY_SECRET`; lets the API see the browser's IP (see "Client IP"). Empty = off.                    |
 
    `.env` is git-ignored and wins over the code-level fallbacks. If a value is
    unset, `next.config.ts` falls back to `http://localhost:3000` for
@@ -98,6 +99,7 @@ Set at runtime (not baked into the build):
 | `API_ORIGIN`          | The API's **internal** URL (the rewrite hop is server-side). |
 | `PORT`                | The port the Node server binds.                              |
 | `NEXT_PUBLIC_APP_URL` | The **public** URL this app is served at.                    |
+| `API_PROXY_SECRET`    | Same value as the API's `FRONT_PROXY_SECRET` (see below).    |
 
 Only `NEXT_PUBLIC_*` values are read at build time and inlined into the client
 bundle, so `NEXT_PUBLIC_APP_URL` must be correct
@@ -107,6 +109,20 @@ process at start.
 `pnpm build` produces a standalone server (`output: 'standalone'`) unless
 `VERCEL` is set. If `API_ORIGIN` is unset in a production build the config logs a
 warning and falls back to `http://localhost:3000`.
+
+### Client IP
+
+The `/api/v1` hop reaches the API from the host's egress address, so on its own the
+API would rate-limit every user as one client. With `API_PROXY_SECRET` set,
+`src/proxy.ts` (`/api/v1/:path*` only, no auth logic) drops any client-sent
+`x-proxy-secret` / `x-client-ip`, then sends the secret in `x-proxy-secret` and the
+browser's IP (`x-real-ip`, else the first `X-Forwarded-For` entry) in `x-client-ip`.
+The API trusts `x-client-ip` only when the secret matches.
+
+On Vercel, set `API_PROXY_SECRET` to the value of the API's `FRONT_PROXY_SECRET`
+(`openssl rand -hex 32`) after the API has it, then redeploy. Vercel overwrites
+client-sent `X-Forwarded-For` / `X-Real-IP`, so the browser can't forge its address.
+Production responses also send `Strict-Transport-Security: max-age=63072000`.
 
 ### Environment invariant
 
@@ -169,6 +185,7 @@ src/lib/actions/          client useActionState actions (total, via runFormActio
 src/schemas/              lenient Zod mirrors of the API schemas
 src/hooks/                use-api-query, use-urls, use-action-result
 next.config.ts            rewrites proxy + security headers (CSP connect-src 'self')
+src/proxy.ts              adds the client-IP headers to the /api/v1 hop
 ```
 
 CI (`.github/workflows/ci.yml`): install → `lint:ci` → `typecheck` → `build`.
