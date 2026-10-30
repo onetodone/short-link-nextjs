@@ -38,7 +38,7 @@ export function UrlForm({ mode, shortCode, defaultUrl = '', defaultNote = '' }: 
   useActionResult(state, {
     onSuccess: () => {
       toast.success(mode === 'create' ? 'Short link created.' : 'Short link updated.')
-      router.push(mode === 'create' ? '/?page=1' : '/')
+      router.push(mode === 'create' ? '/urls?page=1' : '/urls')
     },
   })
 
@@ -104,7 +104,7 @@ export function UrlForm({ mode, shortCode, defaultUrl = '', defaultNote = '' }: 
               </FieldDescription>
             )}
             <div className="flex justify-end gap-2">
-              <Button type="button" variant="ghost" nativeButton={false} render={<Link href="/" />}>
+              <Button type="button" variant="ghost" nativeButton={false} render={<Link href="/urls" />}>
                 Cancel
               </Button>
               <Button type="submit" disabled={pending || unverified}>

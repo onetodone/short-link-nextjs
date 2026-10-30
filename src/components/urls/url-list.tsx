@@ -31,7 +31,7 @@ export function UrlList({ page }: { page: number }) {
     if (page > 1) {
       return (
         <Panel icon={<LinkIcon />} title="Nothing on this page">
-          <Button variant="outline" size="sm" nativeButton={false} render={<Link href="/?page=1" />}>
+          <Button variant="outline" size="sm" nativeButton={false} render={<Link href="/urls?page=1" />}>
             Back to the first page
           </Button>
         </Panel>
@@ -49,7 +49,7 @@ export function UrlList({ page }: { page: number }) {
 
   const onDeleted = () => {
     if (data.items.length === 1 && page > 1) {
-      router.replace(`/?page=${page - 1}`)
+      router.replace(`/urls?page=${page - 1}`)
     } else {
       refetch()
     }

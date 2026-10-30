@@ -15,7 +15,7 @@ export function AuthGuard({ fallback, children }: { fallback: ReactNode; childre
 
   useEffect(() => {
     if (status !== 'unauthenticated') return
-    const next = pathname && pathname !== '/' ? `?next=${encodeURIComponent(pathname)}` : ''
+    const next = pathname && pathname !== '/urls' ? `?next=${encodeURIComponent(pathname)}` : ''
     router.replace(`/login${next}`)
   }, [status, pathname, router])
 
@@ -30,7 +30,7 @@ export function RedirectIfAuthenticated({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (status !== 'authenticated') return
     const next = safeInternalPath(new URLSearchParams(window.location.search).get('next'))
-    router.replace(next ?? '/')
+    router.replace(next ?? '/urls')
   }, [status, router])
 
   if (status === 'authenticated') return null

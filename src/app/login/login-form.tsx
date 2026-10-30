@@ -34,7 +34,7 @@ export function LoginForm() {
   useActionResult(state, {
     onSuccess: () => {
       const next = safeInternalPath(new URLSearchParams(window.location.search).get('next'))
-      router.replace(next ?? '/')
+      router.replace(next ?? '/urls')
     },
   })
 

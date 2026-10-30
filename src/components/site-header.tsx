@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/theme/theme-toggle'
 
 const NAV = [
-  { href: '/', label: 'Dashboard', match: (p: string) => p === '/' || p.startsWith('/urls') },
+  { href: '/urls', label: 'Dashboard', match: (p: string) => p.startsWith('/urls') },
   { href: '/profile', label: 'Profile', match: (p: string) => p.startsWith('/profile') },
 ] as const
 
@@ -18,7 +18,7 @@ export function SiteHeader() {
   return (
     <header className="border-b">
       <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 p-4 sm:px-8">
-        <Link href="/" className="text-lg font-semibold">
+        <Link href="/urls" className="text-lg font-semibold">
           ShortLink
         </Link>
         <nav aria-label="Main" className="flex flex-wrap items-center gap-1">

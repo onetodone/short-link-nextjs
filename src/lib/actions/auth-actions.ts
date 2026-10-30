@@ -12,8 +12,8 @@ export const loginAction = runFormAction(loginSchema, async ({ email, password, 
 
 export const registerAction = runFormAction(
   registerSchema,
-  async ({ email, password, captchaToken }): Promise<FormState> => {
-    await register(email, password, captchaToken)
+  async ({ email, password, acceptTerms, captchaToken }): Promise<FormState> => {
+    await register(email, password, acceptTerms, captchaToken)
     return { success: true }
   },
 )

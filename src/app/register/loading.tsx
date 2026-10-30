@@ -19,6 +19,10 @@ export default function RegisterLoading() {
             <Skeleton className="h-4 w-16" />
             <Skeleton className="h-9 w-full" />
           </div>
+          <div className="flex gap-3">
+            <Skeleton className="size-4 shrink-0" />
+            <Skeleton className="h-4 w-full" />
+          </div>
           <Skeleton className="h-9 w-full" />
           <Skeleton className="mx-auto h-4 w-44" />
         </CardContent>

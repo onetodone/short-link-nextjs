@@ -5,21 +5,20 @@ import { ThemeProvider } from '@/components/theme/theme-provider'
 import { AuthProvider } from '@/lib/auth/context'
 import { SessionExpiryListener } from '@/components/auth/session-expiry-listener'
 import { Toaster } from '@/components/ui/sonner'
+import { getSiteUrl, SITE_NAME } from '@/lib/site'
 import './globals.css'
 
-const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3001'
-
 export const metadata: Metadata = {
-  metadataBase: new URL(appUrl),
-  applicationName: 'Short Link',
+  metadataBase: new URL(getSiteUrl()),
+  applicationName: SITE_NAME,
   title: {
-    default: 'Short Link',
-    template: '%s | Short Link',
+    default: SITE_NAME,
+    template: `%s | ${SITE_NAME}`,
   },
   description: 'Create, track, and manage your short links.',
-  robots: {
-    index: false,
-    follow: false,
+  openGraph: {
+    type: 'website',
+    siteName: SITE_NAME,
   },
 }
 
