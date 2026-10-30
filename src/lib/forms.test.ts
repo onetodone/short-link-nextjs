@@ -66,18 +66,25 @@ describe('toFormState', () => {
 
     expect(toFormState(error)).toEqual({
       error: 'Invalid URL',
+      code: 'VALIDATION',
       fieldErrors: { url: 'Invalid URL', _: 'Body is invalid' },
     })
+  })
+
+  it('keeps the API code so a form can single out an error', () => {
+    const suspended = parseApiError(403, { code: 'ACCOUNT_SUSPENDED', supportEmail: 'help@example.com' })
+    expect(toFormState(suspended)).toEqual({ error: suspended.message, code: 'ACCOUNT_SUSPENDED' })
   })
 
   it('puts a rejected destination on the url field and the quota on the form', () => {
     const rejected = parseApiError(422, { code: 'DESTINATION_REJECTED', reason: 'IP_ADDRESS' })
     expect(toFormState(rejected)).toEqual({
       error: 'Use a domain name instead of an IP address.',
+      code: 'DESTINATION_REJECTED',
       fieldErrors: { url: 'Use a domain name instead of an IP address.' },
     })
 
     const quota = parseApiError(429, { code: 'CREATE_QUOTA_EXCEEDED', limit: 10, retryAfter: 60 })
-    expect(toFormState(quota)).toEqual({ error: quota.message })
+    expect(toFormState(quota)).toEqual({ error: quota.message, code: 'CREATE_QUOTA_EXCEEDED' })
   })
 })

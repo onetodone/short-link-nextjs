@@ -1,7 +1,7 @@
 import { decodeExp } from '@/lib/auth/jwt'
 import { getAccessToken, setAccessToken } from '@/lib/auth/token-store'
 import { SessionExpiredError } from '@/lib/api/errors'
-import { networkError } from '@/lib/api/problem'
+import { networkError, parseApiError, readErrorBody } from '@/lib/api/problem'
 import type { AuthResponse, AuthUser } from '@/lib/api/types'
 
 const CHANNEL_NAME = 'short-link-auth'
@@ -40,17 +40,18 @@ export function getServerSessionSnapshot(): SessionSnapshot {
   return SERVER_SNAPSHOT
 }
 
-const expiryListeners = new Set<() => void>()
+const expiryListeners = new Set<(message?: string) => void>()
 
-export function onSessionExpired(fn: () => void): () => void {
+/** Calls `fn` when the session ends on its own; `message` explains why when the API said so. */
+export function onSessionExpired(fn: (message?: string) => void): () => void {
   expiryListeners.add(fn)
   return () => {
     expiryListeners.delete(fn)
   }
 }
 
-function emitExpired(): void {
-  for (const notify of expiryListeners) notify()
+function emitExpired(message?: string): void {
+  for (const notify of expiryListeners) notify(message)
 }
 
 const channel: BroadcastChannel | null =
@@ -169,10 +170,10 @@ export function logoutAll(): void {
   channel?.postMessage({ type: 'clear' } satisfies BroadcastMessage)
 }
 
-export function expireSession(): void {
+export function expireSession(message?: string): void {
   const hadSession = snapshot.user !== null
   applyClear()
-  if (hadSession) emitExpired()
+  if (hadSession) emitExpired(message)
 }
 
 let refreshPromise: Promise<string> | null = null
@@ -208,8 +209,10 @@ async function doRefresh(attempt = 0): Promise<string> {
 
   if (!res.ok) {
     if (res.status === 401 || res.status === 403) {
-      expireSession()
-      throw new SessionExpiredError()
+      const error = res.status === 403 ? parseApiError(403, await readErrorBody(res)) : null
+      const message = error?.code === 'ACCOUNT_SUSPENDED' ? error.message : undefined
+      expireSession(message)
+      throw new SessionExpiredError(message)
     }
     throw networkError()
   }

@@ -10,6 +10,7 @@ const DESTINATION_MESSAGES: Record<string, string> = {
   LOCAL_HOST: 'Use a public domain — local and internal addresses are not allowed.',
   OWN_DOMAIN: 'This is already a short link. Use the address it points to instead.',
   URL_SHORTENER: 'Links to other URL shorteners or redirectors are not allowed. Use the final address instead.',
+  UNSAFE_DESTINATION: 'This destination is flagged as unsafe (phishing, malware or unwanted software).',
 }
 
 const CODE_MESSAGES: Record<string, string> = {
@@ -52,6 +53,12 @@ function quotaMessage(limit: unknown, retryAfter: unknown): string {
 
 function positiveSeconds(value: unknown): number | undefined {
   return typeof value === 'number' && value > 0 ? value : undefined
+}
+
+function suspendedMessage(supportEmail: unknown): string {
+  const contact =
+    typeof supportEmail === 'string' && supportEmail ? `Contact ${supportEmail} to find out why.` : 'Contact support.'
+  return `This account is suspended. ${contact}`
 }
 
 function cooldownMessage(retryAfter: number | undefined): string {
@@ -97,6 +104,10 @@ export function parseApiError(status: number, body: unknown): ApiError {
     const apiMessage = typeof record.message === 'string' ? record.message : DESTINATION_FALLBACK
     const message = reason && Object.hasOwn(DESTINATION_MESSAGES, reason) ? DESTINATION_MESSAGES[reason] : apiMessage
     return new ApiError(message, { status, code, issues: [{ path: 'url', message }] })
+  }
+
+  if (code === 'ACCOUNT_SUSPENDED') {
+    return new ApiError(suspendedMessage(record.supportEmail), { status, code })
   }
 
   if (code && Object.hasOwn(CODE_MESSAGES, code)) {

@@ -30,7 +30,7 @@ local component state.
 - Node.js 22+ (CI runs on 26)
 - [pnpm](https://pnpm.io) — the version is pinned via `packageManager`; run
   `corepack enable` to have it picked up automatically
-- **The `short-link-api` API (1.6.0 or newer) running and reachable.** It needs PostgreSQL and Redis; see that
+- **The `short-link-api` API (1.8.0 or newer) running and reachable.** It needs PostgreSQL and Redis; see that
   project's README for how to start it. Quick check:
 
   ```bash
@@ -57,6 +57,7 @@ local component state.
    | `API_ORIGIN`          | **Server-only** origin of the API for the rewrites proxy. Never `NEXT_PUBLIC_`. The proxy hop is server-side; in production this is the API's _internal_ URL. |
    | `NEXT_PUBLIC_APP_URL` | Public base URL this app is served at (`metadataBase`).                                                                                                       |
    | `API_PROXY_SECRET`    | **Server-only**, optional. Same value as the API's `FRONT_PROXY_SECRET`; lets the API see the browser's IP (see "Client IP"). Empty = off.                    |
+   | `SUPPORT_EMAIL`       | **Server-only**, optional. Contact address shown on `/link-disabled` and on disabled links; use the API's `SUPPORT_EMAIL`. Read per request. Empty = hidden.   |
 
    `.env` is git-ignored and wins over the code-level fallbacks. If a value is
    unset, `next.config.ts` falls back to `http://localhost:3000` for
@@ -122,6 +123,22 @@ is shown on the password field and never treated as an expired session.
   deletes the account (and clears the refresh cookie) the app drops the session in every tab and
   loads `/account-deleted` as a fresh page.
 
+### Disabled links and suspended accounts
+
+The API's operator can turn a link off or suspend an account.
+
+- A disabled short link redirects visitors to the public `/link-disabled` page, which explains
+  why links get disabled and shows `SUPPORT_EMAIL` when it is set.
+- The owner sees a "Disabled" badge on the link card and a notice on its edit page.
+  `UNSAFE_DESTINATION` (flagged by Google Safe Browsing or the operator) is lifted by saving a
+  different destination; `MANUAL` and `ACCOUNT_SUSPENDED` only by the operator, so the notice
+  points to support.
+- A suspended account gets a dedicated "Account suspended" notice on `/login`
+  (`403 ACCOUNT_SUSPENDED`, with the API's support address). A session that was open at the time
+  ends at the next refresh or link change, with the same message.
+- Saving a destination flagged by Safe Browsing is refused with `422 DESTINATION_REJECTED`
+  (`UNSAFE_DESTINATION`), shown on the URL field.
+
 ## Deployment — runtime environment
 
 Set at runtime (not baked into the build):
@@ -132,11 +149,14 @@ Set at runtime (not baked into the build):
 | `PORT`                | The port the Node server binds.                              |
 | `NEXT_PUBLIC_APP_URL` | The **public** URL this app is served at.                    |
 | `API_PROXY_SECRET`    | Same value as the API's `FRONT_PROXY_SECRET` (see below).    |
+| `SUPPORT_EMAIL`       | Support address shown on `/link-disabled`; optional.         |
 
 Only `NEXT_PUBLIC_*` values are read at build time and inlined into the client
 bundle, so `NEXT_PUBLIC_APP_URL` must be correct
 when you run `pnpm build`. `API_ORIGIN` and `PORT` are read by the server
 process at start.
+
+`SUPPORT_EMAIL` is read per request as well, so changing it needs a restart, not a rebuild.
 
 `pnpm build` produces a standalone server (`output: 'standalone'`) unless
 `VERCEL` is set. If `API_ORIGIN` is unset in a production build the config logs a
@@ -187,8 +207,8 @@ domain, or every copied short link will be wrong.
   routes are limited to 10 req/60 s per client, each route separately; surfaced
   with friendly copy.
 - **Destination rules and daily quota** — the API rejects destinations with
-  credentials, IP addresses, local hosts, other short links or URL shorteners
-  (`422 DESTINATION_REJECTED`, shown on the URL field), and caps each account
+  credentials, IP addresses, local hosts, other short links, URL shorteners or
+  destinations flagged as unsafe (`422 DESTINATION_REJECTED`, shown on the URL field), and caps each account
   at a number of new links per 24 h (`429 CREATE_QUOTA_EXCEEDED`, 10 by
   default, shown with the wait time). The form doesn't pre-check either.
 

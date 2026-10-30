@@ -37,7 +37,10 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
     if (res.status === 204) return undefined as T
 
     if (!res.ok) {
-      throw parseApiError(res.status, await readErrorBody(res))
+      const error = parseApiError(res.status, await readErrorBody(res))
+      // An access token issued before a suspension still passes the signature check until it expires.
+      if (error.code === 'ACCOUNT_SUSPENDED') expireSession(error.message)
+      throw error
     }
 
     const text = await res.text()

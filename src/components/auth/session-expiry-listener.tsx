@@ -10,8 +10,8 @@ export function SessionExpiryListener() {
 
   useEffect(
     () =>
-      onSessionExpired(() => {
-        toast.error('Your session has ended. Please sign in again.')
+      onSessionExpired((message) => {
+        toast.error(message ?? 'Your session has ended. Please sign in again.')
         router.replace('/login')
       }),
     [router],
