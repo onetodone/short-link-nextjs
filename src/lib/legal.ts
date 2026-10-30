@@ -1,4 +1,5 @@
 import { connection } from 'next/server'
+import { getAnalyticsId } from '@/lib/analytics'
 
 /** Date the Terms of Use and Privacy Policy last changed. */
 export const LEGAL_LAST_UPDATED = new Date('2026-10-30T00:00:00Z')
@@ -12,6 +13,7 @@ export type LegalInfo = {
   jurisdiction: string | null
   supportEmail: string | null
   abuseEmail: string | null
+  analytics: boolean
   vercel: boolean
 }
 
@@ -22,7 +24,7 @@ function envValue(name: string): string | null {
 /**
  * Reads the server-only `LEGAL_OPERATOR_NAME`, `LEGAL_JURISDICTION`, `SUPPORT_EMAIL` and
  * `ABUSE_EMAIL` (falling back to `SUPPORT_EMAIL`) per request, so one build serves any
- * deployment. Never throws, so the legal pages render on an incomplete setup. Server components only.
+ * deployment, and whether `GATAG_ID` turns on Google Analytics. Never throws, so the legal pages render on an incomplete setup. Server components only.
  */
 export async function getLegalInfo(): Promise<LegalInfo> {
   await connection()
@@ -32,6 +34,7 @@ export async function getLegalInfo(): Promise<LegalInfo> {
     jurisdiction: envValue('LEGAL_JURISDICTION'),
     supportEmail,
     abuseEmail: envValue('ABUSE_EMAIL') ?? supportEmail,
+    analytics: getAnalyticsId() !== null,
     vercel: Boolean(process.env.VERCEL),
   }
 }

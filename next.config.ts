@@ -12,18 +12,28 @@ const apiOrigin = process.env.API_ORIGIN ?? 'http://localhost:3000'
 // Cloudflare Turnstile loads its script from this origin and renders the challenge in a frame from it.
 const turnstileOrigin = 'https://challenges.cloudflare.com'
 
+// Headers are fixed at build time, so GA needs GATAG_ID set for `pnpm build`. Origins from Google's
+// CSP guide for GA4; Google Signals' regional domains go in CSP_CONNECT_SRC_EXTRA.
+const analyticsEnabled = Boolean(process.env.GATAG_ID?.trim())
+const analyticsScriptSrc = analyticsEnabled ? ' https://www.googletagmanager.com' : ''
+const analyticsConnectSrc = analyticsEnabled
+  ? ' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com'
+  : ''
+const analyticsImgSrc = analyticsEnabled ? ' https://*.google-analytics.com https://*.googletagmanager.com' : ''
+const connectSrcExtra = process.env.CSP_CONNECT_SRC_EXTRA?.trim()
+
 const contentSecurityPolicy = [
   "default-src 'self'",
   "base-uri 'self'",
   "object-src 'none'",
   "frame-ancestors 'none'",
   "form-action 'self'",
-  `script-src 'self' 'unsafe-inline' ${turnstileOrigin}${isDev ? " 'unsafe-eval'" : ''}`,
+  `script-src 'self' 'unsafe-inline' ${turnstileOrigin}${analyticsScriptSrc}${isDev ? " 'unsafe-eval'" : ''}`,
   `frame-src ${turnstileOrigin}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
+  `img-src 'self' data: blob:${analyticsImgSrc}`,
   "font-src 'self' data:",
-  `connect-src 'self'${isDev ? ' ws:' : ''}`,
+  `connect-src 'self'${analyticsConnectSrc}${connectSrcExtra ? ` ${connectSrcExtra}` : ''}${isDev ? ' ws:' : ''}`,
   "worker-src 'self' blob:",
 ].join('; ')
 

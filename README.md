@@ -62,6 +62,8 @@ local component state.
    | `ABUSE_EMAIL`         | **Server-only**, optional. Where the Terms of Use send abuse reports. Read per request. Empty = `SUPPORT_EMAIL`.                                              |
    | `LEGAL_OPERATOR_NAME` | **Server-only**, optional. Person or organization that runs the instance, named in the legal texts. Read per request. Empty = a generic phrase.             |
    | `LEGAL_JURISDICTION`  | **Server-only**, optional. Governing law and courts in the Terms of Use, e.g. `the Republic of Poland`. Read per request. Empty = section left out.         |
+   | `GATAG_ID`            | **Server-only**, optional. Google Analytics measurement ID; loads only after a visitor accepts analytics cookies. Read at build time. Empty = off.          |
+   | `CSP_CONNECT_SRC_EXTRA` | **Server-only**, optional. Extra space-separated origins for the CSP's `connect-src`. Read at build time. Never the API's origin.                        |
 
    `.env` is git-ignored and wins over the code-level fallbacks. If a value is
    unset, `next.config.ts` falls back to `http://localhost:3000` for
@@ -155,7 +157,7 @@ When the API has Cloudflare Turnstile keys, its public `GET /api/v1/config` retu
 - The widget is invisible unless Cloudflare needs the visitor to interact.
 - With `turnstileSiteKey: null` (or an API without `/config`) the forms work without the widget.
 - The CSP allows `https://challenges.cloudflare.com` in `script-src` and `frame-src` only;
-  `connect-src` stays `'self'`.
+  Turnstile adds nothing to `connect-src`.
 
 ### Public site and legal pages
 
@@ -169,6 +171,14 @@ When the API has Cloudflare Turnstile keys, its public `GET /api/v1/config` retu
 - Registration requires the "I agree to the Terms of Use" checkbox and sends `acceptTerms: true`
   (required by `short-link-api` 2.0.0; older APIs ignore it).
 - The footer and the auth pages link to both legal pages.
+- With `GATAG_ID` set, a consent banner asks every visitor about Google Analytics cookies and
+  stores the answer in the `analytics-consent` cookie for 180 days; GA4 loads only after "Accept"
+  and, once the boot refresh is done, sends the signed-in user's internal id as `user_id`.
+  "Cookie settings" in the footer reopens the banner; declining after accepting deletes the `_ga`
+  cookies and reloads the page. The privacy policy gains its Google Analytics sections only
+  when `GATAG_ID` is set. The CSP adds Google's GA4 origins to `script-src`, `img-src` and
+  `connect-src` only then; `CSP_CONNECT_SRC_EXTRA` adds more `connect-src` origins (e.g. Google
+  Signals' regional domains). Both are read at build time, like every security header.
 - `robots.txt` allows only the public pages (`/`, `/login`, `/register`, the legal pages, the Open
   Graph image); `sitemap.xml` lists them. Both use `NEXT_PUBLIC_APP_URL`. `/opengraph-image` is a
   generated 1200×630 PNG.
@@ -195,6 +205,9 @@ process at start.
 
 `SUPPORT_EMAIL`, `ABUSE_EMAIL`, `LEGAL_OPERATOR_NAME` and `LEGAL_JURISDICTION` are read per
 request as well, so changing them needs a restart, not a rebuild.
+
+`GATAG_ID` and `CSP_CONNECT_SRC_EXTRA` must be set when you run `pnpm build`: the security headers
+in `next.config.ts` are fixed at build time, and static pages read `GATAG_ID` while prerendering.
 
 `pnpm build` produces a standalone server (`output: 'standalone'`) unless
 `VERCEL` is set. If `API_ORIGIN` is unset in a production build the config logs a
@@ -273,12 +286,13 @@ src/components/auth/      session-expiry listener, verification banner, Turnstil
 src/components/account/   profile settings: password, email, account deletion
 src/components/theme/     next-themes provider + toggle
 src/components/legal/     legal page layout and footer links
+src/components/analytics/ consent banner, cookie settings, Google Analytics loader
 src/lib/api/              typed API client (public / bearer / error mapping)
 src/lib/auth/             token store, shared refresh, context, guard, jwt decode
 src/lib/actions/          client useActionState actions (total, via runFormAction)
 src/schemas/              lenient Zod mirrors of the API schemas
 src/hooks/                use-api-query, use-urls, use-action-result, use-captcha-site-key
-next.config.ts            rewrites proxy + security headers (CSP connect-src 'self', Turnstile frame)
+next.config.ts            rewrites proxy + security headers (CSP, Turnstile frame, optional GA origins)
 src/proxy.ts              adds the client-IP headers to the /api/v1 hop
 ```
 
