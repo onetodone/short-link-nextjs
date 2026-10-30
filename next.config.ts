@@ -9,13 +9,17 @@ if (process.env.NODE_ENV === 'production' && !process.env.API_ORIGIN) {
 
 const apiOrigin = process.env.API_ORIGIN ?? 'http://localhost:3000'
 
+// Cloudflare Turnstile loads its script from this origin and renders the challenge in a frame from it.
+const turnstileOrigin = 'https://challenges.cloudflare.com'
+
 const contentSecurityPolicy = [
   "default-src 'self'",
   "base-uri 'self'",
   "object-src 'none'",
   "frame-ancestors 'none'",
   "form-action 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
+  `script-src 'self' 'unsafe-inline' ${turnstileOrigin}${isDev ? " 'unsafe-eval'" : ''}`,
+  `frame-src ${turnstileOrigin}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self' data:",
