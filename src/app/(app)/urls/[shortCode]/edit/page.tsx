@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { getSupportEmail } from '@/lib/support'
 import { SHORT_CODE_PATTERN } from '@/schemas/url'
 import { EditUrlView } from '@/app/(app)/urls/[shortCode]/edit/edit-url-view'
 
@@ -11,5 +12,5 @@ export default async function EditUrlPage({ params }: { params: Promise<{ shortC
   const { shortCode } = await params
   if (!SHORT_CODE_PATTERN.test(shortCode)) notFound()
 
-  return <EditUrlView shortCode={shortCode} />
+  return <EditUrlView shortCode={shortCode} supportEmail={await getSupportEmail()} />
 }

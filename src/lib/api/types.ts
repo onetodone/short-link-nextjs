@@ -16,12 +16,17 @@ export interface Me {
   createdAt: string
 }
 
+/** Why a link no longer redirects; `null` on an enabled link. */
+export type UrlDisabledReason = 'UNSAFE_DESTINATION' | 'MANUAL' | 'ACCOUNT_SUSPENDED'
+
 export interface UrlSummary {
   shortCode: string
   shortUrl: string
   originalUrl: string
   note: string | null
   clicks: number
+  disabled: boolean
+  disabledReason: UrlDisabledReason | null
   createdAt: string
   updatedAt: string
 }
