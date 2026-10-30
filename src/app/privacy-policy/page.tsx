@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 }
 
 export default async function PrivacyPolicyPage() {
-  const { operatorName, supportEmail, vercel } = await getLegalInfo()
+  const { operatorName, supportEmail, analytics, vercel } = await getLegalInfo()
   const support = <EmailLink email={supportEmail} />
 
   return (
@@ -104,8 +104,38 @@ export default async function PrivacyPolicyPage() {
           <code>theme</code>, in your browser’s local storage: remembers whether you chose the light or dark theme. It
           never leaves your browser.
         </li>
+        {analytics && (
+          <li>
+            <code>analytics-consent</code>: remembers your choice about analytics cookies for 180 days.
+          </li>
+        )}
       </ul>
-      <p>We don’t use analytics or advertising cookies.</p>
+      {analytics ? (
+        <p>
+          Analytics cookies, only if you accept them: <code>_ga</code> and <code>_ga_…</code>, set by Google Analytics
+          for up to two years, unless you withdraw your consent. We don’t use advertising cookies.
+        </p>
+      ) : (
+        <p>We don’t use analytics or advertising cookies.</p>
+      )}
+
+      {analytics && (
+        <>
+          <h3>Google Analytics</h3>
+          <p>
+            Only if you accept analytics cookies, we use Google Analytics 4, provided by Google Ireland Limited in the
+            EEA, the UK and Switzerland and by Google LLC elsewhere, to understand how the site is used: pages visited,
+            approximate location, device and browser, and the site you came from. When you are signed in, we also send
+            our internal ID of your account, never your email address, so that visits from your different devices are
+            counted together. Google states that Google Analytics 4 doesn’t log or store IP addresses. You can withdraw
+            your consent at any time with “Cookie settings” at the bottom of every page. See{' '}
+            <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">
+              Google’s Privacy Policy
+            </a>
+            .
+          </p>
+        </>
+      )}
 
       <h3>Google Safe Browsing</h3>
       <p>
@@ -141,6 +171,9 @@ export default async function PrivacyPolicyPage() {
           destination checks, handling abuse reports, and keeping records about links and accounts disabled for abuse
           (our legitimate interests in security and in preventing abuse).
         </li>
+        {analytics && (
+          <li>To understand how the site is used, only with your consent, which you can withdraw at any time.</li>
+        )}
         <li>To comply with legal obligations, such as answering lawful requests from authorities.</li>
       </ul>
 
@@ -177,6 +210,7 @@ export default async function PrivacyPolicyPage() {
         <li>Failed sign-in counts: 15 minutes. Daily link counts: 24 hours.</li>
         <li>Server logs: for a limited time, usually no longer than 30 days.</li>
         <li>Confirmation and reset links: deleted when they expire, are used, or your account is deleted.</li>
+        {analytics && <li>Analytics data: up to 14 months in Google Analytics.</li>}
         <li>
           Records about links and accounts disabled for abuse, and emails about abuse reports or your requests: as long
           as needed to handle them and to prevent repeated abuse.
@@ -192,6 +226,7 @@ export default async function PrivacyPolicyPage() {
           have it deleted; deleting your account in your profile removes your account, links and click counts at once;
         </li>
         <li>object to processing based on our legitimate interests, or ask us to restrict it;</li>
+        {analytics && <li>withdraw your consent to analytics at any time with “Cookie settings”;</li>}
         <li>complain to a data protection authority, for example in the country where you live or work.</li>
       </ul>
       <p>To use these rights, write to {support} from the email address of your account. We answer within one month.</p>

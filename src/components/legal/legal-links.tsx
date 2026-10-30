@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import { CookieSettingsButton } from '@/components/analytics/analytics-consent'
 
 const LINK_CLASS = 'hover:text-foreground hover:underline underline-offset-4'
 
@@ -12,6 +13,7 @@ export function LegalLinks({ className }: { className?: string }) {
       <Link href="/privacy-policy" className={LINK_CLASS}>
         Privacy Policy
       </Link>
+      <CookieSettingsButton className={cn(LINK_CLASS, 'cursor-pointer')} />
     </nav>
   )
 }
