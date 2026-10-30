@@ -7,6 +7,8 @@ import { BanIcon } from 'lucide-react'
 import { loginAction } from '@/lib/actions/auth-actions'
 import type { FormState } from '@/lib/forms'
 import { useActionResult } from '@/hooks/use-action-result'
+import { useCaptchaSiteKey } from '@/hooks/use-captcha-site-key'
+import { Turnstile } from '@/components/auth/turnstile'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -20,7 +22,14 @@ export function LoginForm() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [captchaReady, setCaptchaReady] = useState(false)
+  const [captchaNeeded, setCaptchaNeeded] = useState(false)
   const [state, action, pending] = useActionState<FormState, FormData>(loginAction, undefined)
+  const captchaSiteKey = useCaptchaSiteKey()
+  // Once the API asks for the check, it stays until the page is left: a later client-side
+  // validation error must not drop the widget.
+  if (state?.captchaRequired && !captchaNeeded) setCaptchaNeeded(true)
+  const loginCaptchaSiteKey = captchaNeeded ? captchaSiteKey : null
 
   useActionResult(state, {
     onSuccess: () => {
@@ -78,6 +87,14 @@ export function LoginForm() {
                 {state?.fieldErrors?.password && <FieldError>{state.fieldErrors.password}</FieldError>}
               </FieldContent>
             </Field>
+            {loginCaptchaSiteKey && (
+              <Turnstile
+                siteKey={loginCaptchaSiteKey}
+                action="login"
+                resetKey={state}
+                onReadyChange={setCaptchaReady}
+              />
+            )}
             {state?.code === 'ACCOUNT_SUSPENDED' ? (
               <div
                 role="alert"
@@ -92,7 +109,11 @@ export function LoginForm() {
             ) : (
               state?.error && !state.fieldErrors && <FieldError>{state.error}</FieldError>
             )}
-            <Button type="submit" disabled={pending} className="w-full">
+            <Button
+              type="submit"
+              disabled={pending || (Boolean(loginCaptchaSiteKey) && !captchaReady)}
+              className="w-full"
+            >
               {pending ? 'Signing in...' : 'Sign in'}
             </Button>
           </FieldGroup>

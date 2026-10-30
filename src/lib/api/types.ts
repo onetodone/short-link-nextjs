@@ -46,3 +46,11 @@ export interface UrlList {
   limit: number
   offset: number
 }
+
+/** Public settings from `GET /config`. `turnstileSiteKey` is `null` while the API's bot check is off. */
+export interface PublicConfig {
+  turnstileSiteKey: string | null
+}
+
+/** Form a Turnstile token is issued for; the API rejects a token from another form. */
+export type CaptchaAction = 'register' | 'login' | 'forgot-password'

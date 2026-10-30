@@ -143,6 +143,31 @@ describe('parseApiError', () => {
     expect(parseApiError(418, { message: 7 }).message).toBe('Something went wrong. Please try again.')
     expect(parseApiError(404, null).code).toBeUndefined()
   })
+
+  it('flags a failed sign-in that makes the next attempt need the bot check', () => {
+    const body = { statusCode: 401, message: 'Invalid email or password', error: 'Unauthorized' }
+
+    const required = parseApiError(401, { ...body, captchaRequired: true })
+    expect(required.message).toBe('Invalid email or password')
+    expect(required.captchaRequired).toBe(true)
+
+    expect(parseApiError(401, { ...body, captchaRequired: false }).captchaRequired).toBeUndefined()
+  })
+
+  it('maps the bot check errors, flagging the ones a fresh token fixes', () => {
+    const missing = parseApiError(400, { code: 'CAPTCHA_REQUIRED', message: 'Complete the verification to continue' })
+    expect(missing).toMatchObject({ status: 400, code: 'CAPTCHA_REQUIRED', captchaRequired: true })
+    expect(missing.message).toBe('Complete the verification to continue.')
+
+    const rejected = parseApiError(400, { code: 'CAPTCHA_FAILED' })
+    expect(rejected).toMatchObject({ code: 'CAPTCHA_FAILED', captchaRequired: true })
+    expect(rejected.message).toBe('Verification failed. Please try again.')
+
+    const unavailable = parseApiError(503, { code: 'CAPTCHA_UNAVAILABLE' })
+    expect(unavailable.code).toBe('CAPTCHA_UNAVAILABLE')
+    expect(unavailable.captchaRequired).toBeUndefined()
+    expect(unavailable.message).toBe('Verification is unavailable right now. Please try again in a few minutes.')
+  })
 })
 
 describe('networkError', () => {

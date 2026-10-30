@@ -30,8 +30,8 @@ local component state.
 - Node.js 22+ (CI runs on 26)
 - [pnpm](https://pnpm.io) — the version is pinned via `packageManager`; run
   `corepack enable` to have it picked up automatically
-- **The `short-link-api` API (1.8.0 or newer) running and reachable.** It needs PostgreSQL and Redis; see that
-  project's README for how to start it. Quick check:
+- **The `short-link-api` API (1.8.0 or newer; 1.9.0 or newer for bot protection) running and
+  reachable.** It needs PostgreSQL and Redis; see that project's README for how to start it. Quick check:
 
   ```bash
   curl -i http://localhost:3000/api/v1/auth/me   # expect 401 (unauthenticated)
@@ -139,6 +139,20 @@ The API's operator can turn a link off or suspend an account.
 - Saving a destination flagged by Safe Browsing is refused with `422 DESTINATION_REJECTED`
   (`UNSAFE_DESTINATION`), shown on the URL field.
 
+### Bot protection
+
+When the API has Cloudflare Turnstile keys, its public `GET /api/v1/config` returns
+`turnstileSiteKey`; the app loads it once per page load and needs no env variable of its own.
+
+- Register and forgot-password always show the widget; sign-in shows it once the API answers a
+  failed attempt with `captchaRequired: true` (or `CAPTCHA_REQUIRED` / `CAPTCHA_FAILED`).
+- The token goes to the API as `captchaToken`. Tokens are single-use, so the widget fetches a new
+  one after every submit; the submit button waits for it.
+- The widget is invisible unless Cloudflare needs the visitor to interact.
+- With `turnstileSiteKey: null` (or an API without `/config`) the forms work without the widget.
+- The CSP allows `https://challenges.cloudflare.com` in `script-src` and `frame-src` only;
+  `connect-src` stays `'self'`.
+
 ## Deployment — runtime environment
 
 Set at runtime (not baked into the build):
@@ -231,15 +245,15 @@ domain, or every copied short link will be wrong.
 src/app/                 Routes (App Router). (app)/ = protected client group.
 src/components/ui/        shadcn primitives
 src/components/urls/      link-cabinet components
-src/components/auth/      session-expiry listener, verification banner
+src/components/auth/      session-expiry listener, verification banner, Turnstile widget
 src/components/account/   profile settings: password, email, account deletion
 src/components/theme/     next-themes provider + toggle
 src/lib/api/              typed API client (public / bearer / error mapping)
 src/lib/auth/             token store, shared refresh, context, guard, jwt decode
 src/lib/actions/          client useActionState actions (total, via runFormAction)
 src/schemas/              lenient Zod mirrors of the API schemas
-src/hooks/                use-api-query, use-urls, use-action-result
-next.config.ts            rewrites proxy + security headers (CSP connect-src 'self')
+src/hooks/                use-api-query, use-urls, use-action-result, use-captcha-site-key
+next.config.ts            rewrites proxy + security headers (CSP connect-src 'self', Turnstile frame)
 src/proxy.ts              adds the client-IP headers to the /api/v1 hop
 ```
 

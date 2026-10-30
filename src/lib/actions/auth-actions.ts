@@ -5,20 +5,26 @@ import { clearLocalSession } from '@/lib/auth/session'
 import { runFormAction, type FormState } from '@/lib/forms'
 import { forgotPasswordSchema, loginSchema, registerSchema, resetPasswordSchema } from '@/schemas/auth'
 
-export const loginAction = runFormAction(loginSchema, async ({ email, password }): Promise<FormState> => {
-  await login(email, password)
+export const loginAction = runFormAction(loginSchema, async ({ email, password, captchaToken }): Promise<FormState> => {
+  await login(email, password, captchaToken)
   return { success: true }
 })
 
-export const registerAction = runFormAction(registerSchema, async ({ email, password }): Promise<FormState> => {
-  await register(email, password)
-  return { success: true }
-})
+export const registerAction = runFormAction(
+  registerSchema,
+  async ({ email, password, captchaToken }): Promise<FormState> => {
+    await register(email, password, captchaToken)
+    return { success: true }
+  },
+)
 
-export const forgotPasswordAction = runFormAction(forgotPasswordSchema, async ({ email }): Promise<FormState> => {
-  await requestPasswordReset(email)
-  return { success: true }
-})
+export const forgotPasswordAction = runFormAction(
+  forgotPasswordSchema,
+  async ({ email, captchaToken }): Promise<FormState> => {
+    await requestPasswordReset(email, captchaToken)
+    return { success: true }
+  },
+)
 
 export const resetPasswordAction = runFormAction(
   resetPasswordSchema,

@@ -17,7 +17,12 @@ const CODE_MESSAGES: Record<string, string> = {
   EMAIL_NOT_VERIFIED: 'Confirm your email address to create or edit links.',
   INVALID_TOKEN: 'This link is invalid or has expired.',
   INVALID_PASSWORD: 'Your password is incorrect.',
+  CAPTCHA_REQUIRED: 'Complete the verification to continue.',
+  CAPTCHA_FAILED: 'Verification failed. Please try again.',
+  CAPTCHA_UNAVAILABLE: 'Verification is unavailable right now. Please try again in a few minutes.',
 }
+
+const CAPTCHA_CODES = new Set(['CAPTCHA_REQUIRED', 'CAPTCHA_FAILED'])
 
 const STATUS_FALLBACK: Record<number, string> = {
   400: 'The request was invalid.',
@@ -83,10 +88,13 @@ export async function readErrorBody(res: Response): Promise<unknown> {
  * Turns an API error response into an `ApiError`. `code` is the API's machine-readable `code` when
  * present (a rejected destination also becomes a `url` issue), otherwise Nest's `error` name.
  * `retryAfter` carries the API's wait in seconds for the quota and email cooldown errors.
+ * `captchaRequired` is set when the next attempt needs a Turnstile token: a failed sign-in past the
+ * API's threshold, or a missing or rejected token.
  */
 export function parseApiError(status: number, body: unknown): ApiError {
   const record = isRecord(body) ? body : {}
   const code = typeof record.code === 'string' ? record.code : undefined
+  const captchaRequired = record.captchaRequired === true || (code !== undefined && CAPTCHA_CODES.has(code))
 
   if (status === 429) {
     const retryAfter = positiveSeconds(record.retryAfter)
@@ -111,7 +119,7 @@ export function parseApiError(status: number, body: unknown): ApiError {
   }
 
   if (code && Object.hasOwn(CODE_MESSAGES, code)) {
-    return new ApiError(CODE_MESSAGES[code], { status, code })
+    return new ApiError(CODE_MESSAGES[code], { status, code, ...(captchaRequired && { captchaRequired }) })
   }
 
   if (status === 400 && Array.isArray(record.errors)) {
@@ -134,5 +142,6 @@ export function parseApiError(status: number, body: unknown): ApiError {
   return new ApiError(message, {
     status,
     code: code ?? (typeof record.error === 'string' ? record.error : undefined),
+    ...(captchaRequired && { captchaRequired }),
   })
 }

@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation'
 import { registerAction } from '@/lib/actions/auth-actions'
 import type { FormState } from '@/lib/forms'
 import { useActionResult } from '@/hooks/use-action-result'
+import { useCaptchaSiteKey } from '@/hooks/use-captcha-site-key'
+import { Turnstile } from '@/components/auth/turnstile'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -19,7 +21,10 @@ export function RegisterForm() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [captchaReady, setCaptchaReady] = useState(false)
   const [state, action, pending] = useActionState<FormState, FormData>(registerAction, undefined)
+  const captchaSiteKey = useCaptchaSiteKey()
+  const waitingForCaptcha = captchaSiteKey === undefined || (captchaSiteKey !== null && !captchaReady)
 
   useActionResult(state, {
     onSuccess: () => {
@@ -70,8 +75,11 @@ export function RegisterForm() {
                 {state?.fieldErrors?.password && <FieldError>{state.fieldErrors.password}</FieldError>}
               </FieldContent>
             </Field>
+            {captchaSiteKey && (
+              <Turnstile siteKey={captchaSiteKey} action="register" resetKey={state} onReadyChange={setCaptchaReady} />
+            )}
             {state?.error && !state.fieldErrors && <FieldError>{state.error}</FieldError>}
-            <Button type="submit" disabled={pending} className="w-full">
+            <Button type="submit" disabled={pending || waitingForCaptcha} className="w-full">
               {pending ? 'Creating account...' : 'Create account'}
             </Button>
           </FieldGroup>
