@@ -10,6 +10,7 @@ import { useCaptchaSiteKey } from '@/hooks/use-captcha-site-key'
 import { Turnstile } from '@/components/auth/turnstile'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, FieldContent, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 
@@ -21,6 +22,7 @@ export function RegisterForm() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [acceptTerms, setAcceptTerms] = useState(false)
   const [captchaReady, setCaptchaReady] = useState(false)
   const [state, action, pending] = useActionState<FormState, FormData>(registerAction, undefined)
   const captchaSiteKey = useCaptchaSiteKey()
@@ -29,7 +31,7 @@ export function RegisterForm() {
   useActionResult(state, {
     onSuccess: () => {
       const next = safeInternalPath(new URLSearchParams(window.location.search).get('next'))
-      router.replace(next ?? '/')
+      router.replace(next ?? '/urls')
     },
   })
 
@@ -73,6 +75,29 @@ export function RegisterForm() {
                   aria-invalid={Boolean(state?.fieldErrors?.password)}
                 />
                 {state?.fieldErrors?.password && <FieldError>{state.fieldErrors.password}</FieldError>}
+              </FieldContent>
+            </Field>
+            <Field orientation="horizontal" data-invalid={Boolean(state?.fieldErrors?.acceptTerms)}>
+              <Checkbox
+                id="acceptTerms"
+                name="acceptTerms"
+                checked={acceptTerms}
+                onCheckedChange={setAcceptTerms}
+                aria-invalid={Boolean(state?.fieldErrors?.acceptTerms)}
+              />
+              <FieldContent>
+                <FieldLabel htmlFor="acceptTerms" className="block font-normal">
+                  I agree to the{' '}
+                  <Link href="/terms-of-use" target="_blank" className="underline underline-offset-4">
+                    Terms of Use
+                  </Link>{' '}
+                  and have read the{' '}
+                  <Link href="/privacy-policy" target="_blank" className="underline underline-offset-4">
+                    Privacy Policy
+                  </Link>
+                  .
+                </FieldLabel>
+                {state?.fieldErrors?.acceptTerms && <FieldError>{state.fieldErrors.acceptTerms}</FieldError>}
               </FieldContent>
             </Field>
             {captchaSiteKey && (

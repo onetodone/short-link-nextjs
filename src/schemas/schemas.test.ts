@@ -36,20 +36,34 @@ describe('captchaToken', () => {
     const values = { email: 'a@b.co', password: 'x'.repeat(8) }
 
     expect(loginSchema.parse({ ...values, captchaToken: 'tok' }).captchaToken).toBe('tok')
-    expect(registerSchema.parse({ ...values, captchaToken: '' }).captchaToken).toBeUndefined()
+    expect(registerSchema.parse({ ...values, acceptTerms: 'on', captchaToken: '' }).captchaToken).toBeUndefined()
     expect(forgotPasswordSchema.parse({ email: 'a@b.co' }).captchaToken).toBeUndefined()
   })
 })
 
 describe('registerSchema', () => {
+  const accepted = { email: 'a@b.co', acceptTerms: 'on' }
+
   it('enforces the password length bounds', () => {
-    expect(firstMessage(registerSchema.safeParse({ email: 'a@b.co', password: 'short' }))).toBe(
+    expect(firstMessage(registerSchema.safeParse({ ...accepted, password: 'short' }))).toBe(
       'Password must be at least 8 characters.',
     )
-    expect(firstMessage(registerSchema.safeParse({ email: 'a@b.co', password: 'x'.repeat(129) }))).toBe(
+    expect(firstMessage(registerSchema.safeParse({ ...accepted, password: 'x'.repeat(129) }))).toBe(
       'Password must be at most 128 characters.',
     )
-    expect(registerSchema.safeParse({ email: 'a@b.co', password: 'x'.repeat(128) }).success).toBe(true)
+    expect(registerSchema.safeParse({ ...accepted, password: 'x'.repeat(128) }).success).toBe(true)
+  })
+
+  it('requires the Terms of Use checkbox and sends it as true', () => {
+    const values = { email: 'a@b.co', password: 'x'.repeat(8) }
+    const unchecked = registerSchema.safeParse(values)
+
+    expect(unchecked.success).toBe(false)
+    expect(unchecked.error?.issues[0]).toMatchObject({
+      path: ['acceptTerms'],
+      message: 'Please agree to the Terms of Use to create an account.',
+    })
+    expect(registerSchema.parse({ ...values, acceptTerms: 'on' }).acceptTerms).toBe(true)
   })
 })
 

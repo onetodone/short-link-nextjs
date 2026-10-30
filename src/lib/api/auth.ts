@@ -11,10 +11,15 @@ export async function login(email: string, password: string, captchaToken?: stri
   adopt(body)
 }
 
-export async function register(email: string, password: string, captchaToken?: string): Promise<void> {
+export async function register(
+  email: string,
+  password: string,
+  acceptTerms: true,
+  captchaToken?: string,
+): Promise<void> {
   const body = await apiPublicFetch<AuthResponse>('/auth/register', {
     method: 'POST',
-    body: JSON.stringify({ email, password, captchaToken }),
+    body: JSON.stringify({ email, password, acceptTerms, captchaToken }),
   })
   adopt(body)
 }

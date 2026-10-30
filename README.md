@@ -2,7 +2,8 @@
 
 A signed-in cabinet for the **short-link-api** API: create, list, edit, and delete
 your own short links, keep a private note on each, and see per-link click counts
-(bots and link previews excluded).
+(bots and link previews excluded). Signed-out visitors get a public landing page, the
+Terms of Use and the Privacy Policy.
 
 This is a **frontend only** — a Next.js client. It has **no database and no
 backend of its own**; it talks to the separate `short-link-api` NestJS API. That API
@@ -57,7 +58,10 @@ local component state.
    | `API_ORIGIN`          | **Server-only** origin of the API for the rewrites proxy. Never `NEXT_PUBLIC_`. The proxy hop is server-side; in production this is the API's _internal_ URL. |
    | `NEXT_PUBLIC_APP_URL` | Public base URL this app is served at (`metadataBase`).                                                                                                       |
    | `API_PROXY_SECRET`    | **Server-only**, optional. Same value as the API's `FRONT_PROXY_SECRET`; lets the API see the browser's IP (see "Client IP"). Empty = off.                    |
-   | `SUPPORT_EMAIL`       | **Server-only**, optional. Contact address shown on `/link-disabled` and on disabled links; use the API's `SUPPORT_EMAIL`. Read per request. Empty = hidden.   |
+   | `SUPPORT_EMAIL`       | **Server-only**, optional. Contact address shown on `/link-disabled`, on disabled links and in the legal texts; use the API's `SUPPORT_EMAIL`. Read per request. Empty = hidden. |
+   | `ABUSE_EMAIL`         | **Server-only**, optional. Where the Terms of Use send abuse reports. Read per request. Empty = `SUPPORT_EMAIL`.                                              |
+   | `LEGAL_OPERATOR_NAME` | **Server-only**, optional. Person or organization that runs the instance, named in the legal texts. Read per request. Empty = a generic phrase.             |
+   | `LEGAL_JURISDICTION`  | **Server-only**, optional. Governing law and courts in the Terms of Use, e.g. `the Republic of Poland`. Read per request. Empty = section left out.         |
 
    `.env` is git-ignored and wins over the code-level fallbacks. If a value is
    unset, `next.config.ts` falls back to `http://localhost:3000` for
@@ -153,6 +157,22 @@ When the API has Cloudflare Turnstile keys, its public `GET /api/v1/config` retu
 - The CSP allows `https://challenges.cloudflare.com` in `script-src` and `frame-src` only;
   `connect-src` stays `'self'`.
 
+### Public site and legal pages
+
+- `/` is a public landing page. It renders on the server for visitors and crawlers; once the boot
+  refresh finds a session it sends signed-in users to the dashboard at `/urls`.
+- `/terms-of-use` and `/privacy-policy` render per request from the server-only `LEGAL_*`,
+  `SUPPORT_EMAIL` and `ABUSE_EMAIL` variables, so one build serves any operator. Unset values fall
+  back to neutral wording; the governing-law section appears only with `LEGAL_JURISDICTION`.
+  The texts describe what the API stores and logs, Google Safe Browsing and Cloudflare Turnstile;
+  update them, and `LEGAL_LAST_UPDATED` in `src/lib/legal.ts`, when that changes.
+- Registration requires the "I agree to the Terms of Use" checkbox and sends `acceptTerms: true`
+  (required by `short-link-api` 2.0.0; older APIs ignore it).
+- The footer and the auth pages link to both legal pages.
+- `robots.txt` allows only the public pages (`/`, `/login`, `/register`, the legal pages, the Open
+  Graph image); `sitemap.xml` lists them. Both use `NEXT_PUBLIC_APP_URL`. `/opengraph-image` is a
+  generated 1200×630 PNG.
+
 ## Deployment — runtime environment
 
 Set at runtime (not baked into the build):
@@ -163,14 +183,18 @@ Set at runtime (not baked into the build):
 | `PORT`                | The port the Node server binds.                              |
 | `NEXT_PUBLIC_APP_URL` | The **public** URL this app is served at.                    |
 | `API_PROXY_SECRET`    | Same value as the API's `FRONT_PROXY_SECRET` (see below).    |
-| `SUPPORT_EMAIL`       | Support address shown on `/link-disabled`; optional.         |
+| `SUPPORT_EMAIL`       | Support address on `/link-disabled` and the legal pages.     |
+| `ABUSE_EMAIL`         | Abuse-report address in the Terms of Use; optional.          |
+| `LEGAL_OPERATOR_NAME` | Operator named in the legal texts; set it for a public site. |
+| `LEGAL_JURISDICTION`  | Governing law in the Terms of Use; optional.                 |
 
 Only `NEXT_PUBLIC_*` values are read at build time and inlined into the client
 bundle, so `NEXT_PUBLIC_APP_URL` must be correct
 when you run `pnpm build`. `API_ORIGIN` and `PORT` are read by the server
 process at start.
 
-`SUPPORT_EMAIL` is read per request as well, so changing it needs a restart, not a rebuild.
+`SUPPORT_EMAIL`, `ABUSE_EMAIL`, `LEGAL_OPERATOR_NAME` and `LEGAL_JURISDICTION` are read per
+request as well, so changing them needs a restart, not a rebuild.
 
 `pnpm build` produces a standalone server (`output: 'standalone'`) unless
 `VERCEL` is set. If `API_ORIGIN` is unset in a production build the config logs a
@@ -248,6 +272,7 @@ src/components/urls/      link-cabinet components
 src/components/auth/      session-expiry listener, verification banner, Turnstile widget
 src/components/account/   profile settings: password, email, account deletion
 src/components/theme/     next-themes provider + toggle
+src/components/legal/     legal page layout and footer links
 src/lib/api/              typed API client (public / bearer / error mapping)
 src/lib/auth/             token store, shared refresh, context, guard, jwt decode
 src/lib/actions/          client useActionState actions (total, via runFormAction)

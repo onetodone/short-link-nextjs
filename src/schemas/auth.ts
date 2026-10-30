@@ -26,6 +26,9 @@ const newPassword = z
 export const registerSchema = z.object({
   email,
   password: newPassword,
+  acceptTerms: z
+    .literal('on', { error: 'Please agree to the Terms of Use to create an account.' })
+    .transform(() => true as const),
   captchaToken,
 })
 

@@ -20,13 +20,13 @@ describe('captcha token', () => {
     fetchMock.mockImplementation(async () => json(200, { user, accessToken: 'a.b.c' }))
 
     await login('ann@example.com', 'secret', 'tok')
-    await register('ann@example.com', 'password1', 'tok')
+    await register('ann@example.com', 'password1', true, 'tok')
     await requestPasswordReset('ann@example.com')
 
     const bodies = fetchMock.mock.calls.map(([, init]) => JSON.parse(String(init?.body)) as unknown)
     expect(bodies).toEqual([
       { email: 'ann@example.com', password: 'secret', captchaToken: 'tok' },
-      { email: 'ann@example.com', password: 'password1', captchaToken: 'tok' },
+      { email: 'ann@example.com', password: 'password1', acceptTerms: true, captchaToken: 'tok' },
       { email: 'ann@example.com' },
     ])
   })
