@@ -28,7 +28,7 @@ export function VerifyEmailView({ token }: { token: string }) {
     if (!verified || status === 'loading') return
     if (status === 'authenticated') updateSessionUser(verified)
     toast.success('Email address confirmed.')
-    router.replace(status === 'authenticated' ? '/' : '/login')
+    router.replace(status === 'authenticated' ? '/urls' : '/login')
   }, [verified, status, router])
 
   if (loading || verified) return <AuthCardSkeleton />
@@ -53,7 +53,7 @@ export function VerifyEmailView({ token }: { token: string }) {
         title="Email already confirmed"
         description="Your email address is confirmed. This link is no longer needed."
       >
-        <Button className="w-full" nativeButton={false} render={<Link href="/" />}>
+        <Button className="w-full" nativeButton={false} render={<Link href="/urls" />}>
           Go to your links
         </Button>
       </AuthCard>

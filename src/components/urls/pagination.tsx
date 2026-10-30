@@ -25,7 +25,7 @@ export function Pagination({ page, total, pageSize }: { page: number; total: num
             Prev
           </Button>
         ) : (
-          <Button variant="outline" size="sm" nativeButton={false} render={<Link href={`/?page=${page - 1}`} />}>
+          <Button variant="outline" size="sm" nativeButton={false} render={<Link href={`/urls?page=${page - 1}`} />}>
             <ChevronLeftIcon />
             Prev
           </Button>
@@ -36,7 +36,7 @@ export function Pagination({ page, total, pageSize }: { page: number; total: num
             <ChevronRightIcon />
           </Button>
         ) : (
-          <Button variant="outline" size="sm" nativeButton={false} render={<Link href={`/?page=${page + 1}`} />}>
+          <Button variant="outline" size="sm" nativeButton={false} render={<Link href={`/urls?page=${page + 1}`} />}>
             Next
             <ChevronRightIcon />
           </Button>

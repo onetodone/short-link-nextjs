@@ -24,7 +24,7 @@ export function EditUrlView({ shortCode, supportEmail }: { shortCode: string; su
   useEffect(() => {
     if (!notFound) return
     toast.error('That short link was not found.')
-    router.replace('/')
+    router.replace('/urls')
   }, [notFound, router])
 
   if (loading) return <EditUrlBodySkeleton />
