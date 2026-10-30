@@ -145,6 +145,18 @@ export function clearLocalSession(): void {
   channel?.postMessage({ type: 'clear' } satisfies BroadcastMessage)
 }
 
+/**
+ * Drops the session in every tab and loads `path` as a fresh page — for an account the API has
+ * already deleted. A full load leaves nothing of the account in memory and cannot be overtaken by
+ * the guard's redirect to `/login`.
+ */
+export function leaveDeletedAccount(path: string): void {
+  setAccessToken(null)
+  clearProactiveTimer()
+  channel?.postMessage({ type: 'clear' } satisfies BroadcastMessage)
+  window.location.replace(path)
+}
+
 export function logout(): void {
   revokeOnServer(LOGOUT_PATH, getAccessToken())
   applyClear()

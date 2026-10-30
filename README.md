@@ -30,7 +30,7 @@ local component state.
 - Node.js 22+ (CI runs on 26)
 - [pnpm](https://pnpm.io) — the version is pinned via `packageManager`; run
   `corepack enable` to have it picked up automatically
-- **The `short-link-api` API (1.5.0 or newer) running and reachable.** It needs PostgreSQL and Redis; see that
+- **The `short-link-api` API (1.6.0 or newer) running and reachable.** It needs PostgreSQL and Redis; see that
   project's README for how to start it. Quick check:
 
   ```bash
@@ -107,6 +107,21 @@ The API emails links to `/verify-email?token=…` and `/reset-password?token=…
   accounts. `/reset-password` sets the new password; the API revokes every session, so the app
   clears the local session in all tabs and sends you to `/login`.
 
+### Account settings
+
+Every change on `/profile` asks for the current password; a wrong one (`403 INVALID_PASSWORD`)
+is shown on the password field and never treated as an expired session.
+
+- **Password** — the API keeps this session and revokes every other one, so other devices need
+  the new password.
+- **Email** — the API emails a link to `/confirm-email?token=…` at the new address; the account
+  keeps its address until that page posts the token. A used or expired link (`INVALID_TOKEN`) and
+  an address another account took meanwhile (`409`) each get their own message. Open tabs pick up
+  the new address over the `BroadcastChannel`.
+- **Delete account** — a dialog asks for the password and the typed word `DELETE`. After the API
+  deletes the account (and clears the refresh cookie) the app drops the session in every tab and
+  loads `/account-deleted` as a fresh page.
+
 ## Deployment — runtime environment
 
 Set at runtime (not baked into the build):
@@ -166,7 +181,6 @@ domain, or every copied short link will be wrong.
   fires the server call with the in-memory access token and always clears the
   local session, so a network failure (or a dropped access token) still signs
   you out locally while leaving the server session to expire on its own.
-- **Profile is read-only** — no name, email or password change from a signed-in session.
 - **No custom short codes** — `POST /urls` accepts only `{ url, note }`; edit
   changes the destination and the note, never the code.
 - **Auth throttle** — `/auth/{register,login}` and the verification and password
@@ -198,6 +212,7 @@ src/app/                 Routes (App Router). (app)/ = protected client group.
 src/components/ui/        shadcn primitives
 src/components/urls/      link-cabinet components
 src/components/auth/      session-expiry listener, verification banner
+src/components/account/   profile settings: password, email, account deletion
 src/components/theme/     next-themes provider + toggle
 src/lib/api/              typed API client (public / bearer / error mapping)
 src/lib/auth/             token store, shared refresh, context, guard, jwt decode

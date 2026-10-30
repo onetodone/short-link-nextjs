@@ -36,7 +36,39 @@ export const resetPasswordSchema = z
     path: ['confirmPassword'],
   })
 
+const currentPassword = z.string().min(1, { error: 'Enter your current password.' })
+
+/** The change-password form: the current password plus the new one, typed twice. */
+export const changePasswordSchema = z
+  .object({
+    currentPassword,
+    newPassword: newPassword,
+    confirmPassword: z.string(),
+  })
+  .refine((values) => values.newPassword === values.confirmPassword, {
+    error: 'Passwords do not match.',
+    path: ['confirmPassword'],
+  })
+
+/** The change-email form: the new address and the current password. */
+export const changeEmailSchema = z.object({ newEmail: email, password: currentPassword })
+
+/** The word a user types to confirm deleting their account. */
+export const DELETE_CONFIRMATION = 'DELETE'
+
+/** The delete-account form: the current password and the typed {@link DELETE_CONFIRMATION}. */
+export const deleteAccountSchema = z.object({
+  password: currentPassword,
+  confirmation: z
+    .string()
+    .trim()
+    .refine((value) => value === DELETE_CONFIRMATION, { error: `Type ${DELETE_CONFIRMATION} to confirm.` }),
+})
+
 export type LoginInput = z.infer<typeof loginSchema>
 export type RegisterInput = z.infer<typeof registerSchema>
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>
+export type ChangeEmailInput = z.infer<typeof changeEmailSchema>
+export type DeleteAccountInput = z.infer<typeof deleteAccountSchema>

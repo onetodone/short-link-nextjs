@@ -15,6 +15,7 @@ const DESTINATION_MESSAGES: Record<string, string> = {
 const CODE_MESSAGES: Record<string, string> = {
   EMAIL_NOT_VERIFIED: 'Confirm your email address to create or edit links.',
   INVALID_TOKEN: 'This link is invalid or has expired.',
+  INVALID_PASSWORD: 'Your password is incorrect.',
 }
 
 const STATUS_FALLBACK: Record<number, string> = {

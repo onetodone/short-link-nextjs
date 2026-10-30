@@ -302,6 +302,20 @@ describe('cross-tab broadcast', () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
+  it('leaveDeletedAccount drops the token, broadcasts and loads the page fresh', async () => {
+    const replace = vi.fn()
+    vi.stubGlobal('location', { replace })
+    const { session, tokenStore, channel } = await load()
+    session.adopt(authResponse('live'), false)
+
+    session.leaveDeletedAccount('/account-deleted')
+
+    expect(tokenStore.getAccessToken()).toBeNull()
+    expect(channel.posted).toEqual([{ type: 'clear' }])
+    expect(replace).toHaveBeenCalledWith('/account-deleted')
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
   it('updateSessionUser replaces the signed-in user and broadcasts it', async () => {
     const { session, tokenStore, channel } = await load()
     session.adopt(authResponse('live'), false)
