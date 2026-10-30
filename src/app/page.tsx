@@ -1,10 +1,8 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { ChartColumnIcon, CopyIcon, PencilIcon, ShieldCheckIcon, StickyNoteIcon, TrashIcon } from 'lucide-react'
-import { RedirectIfAuthenticated } from '@/lib/auth/guard'
 import { getSiteUrl, SITE_NAME } from '@/lib/site'
-import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { LandingCallToAction } from '@/components/landing-call-to-action'
 import { PublicHeader } from '@/components/public-header'
 import { SiteFooter } from '@/components/site-footer'
 
@@ -122,19 +120,8 @@ export default function HomePage() {
     ],
   }
 
-  const callToAction = (
-    <div className="flex flex-wrap gap-2">
-      <Button size="lg" nativeButton={false} render={<Link href="/register" />}>
-        Get started
-      </Button>
-      <Button size="lg" variant="outline" nativeButton={false} render={<Link href="/login" />}>
-        Sign in
-      </Button>
-    </div>
-  )
-
   return (
-    <RedirectIfAuthenticated>
+    <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
@@ -149,7 +136,7 @@ export default function HomePage() {
             A free link shortener. Turn a long link into a short one, share it anywhere, change where it leads later,
             and see how many people opened it.
           </p>
-          {callToAction}
+          <LandingCallToAction />
         </section>
         <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 pb-12 sm:px-8 sm:pb-20">
           <h2 className="text-2xl font-semibold">What you get</h2>
@@ -199,10 +186,10 @@ export default function HomePage() {
           <p className="max-w-3xl text-pretty text-muted-foreground">
             It’s free and takes a minute: create an account, paste a link and share the short one.
           </p>
-          {callToAction}
+          <LandingCallToAction />
         </section>
       </main>
       <SiteFooter />
-    </RedirectIfAuthenticated>
+    </>
   )
 }

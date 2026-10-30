@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { ThemeToggle } from '@/components/theme/theme-toggle'
 
 export function PublicHeader() {
-  const { status } = useAuth()
+  const { status, logout } = useAuth()
 
   return (
     <header className="border-b">
@@ -25,9 +25,14 @@ export function PublicHeader() {
             </>
           )}
           {status === 'authenticated' && (
-            <Button nativeButton={false} render={<Link href="/urls" />}>
-              Dashboard
-            </Button>
+            <>
+              <Button nativeButton={false} render={<Link href="/urls" />}>
+                My links
+              </Button>
+              <Button variant="outline" onClick={logout}>
+                Sign out
+              </Button>
+            </>
           )}
           {status === 'unauthenticated' && (
             <>
