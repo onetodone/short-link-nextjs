@@ -1,12 +1,22 @@
 import type { ReactNode } from 'react'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { LegalLinks } from '@/components/legal/legal-links'
 
 export function AuthLayout({ children }: { children: ReactNode }) {
   return (
-    <main id="main-content" tabIndex={-1} className="flex min-h-svh items-center justify-center p-4 outline-none">
-      {children}
-    </main>
+    <>
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="flex flex-1 flex-col items-center justify-center p-4 outline-none"
+      >
+        {children}
+      </main>
+      <footer className="p-4">
+        <LegalLinks className="justify-center text-xs text-muted-foreground" />
+      </footer>
+    </>
   )
 }
 
