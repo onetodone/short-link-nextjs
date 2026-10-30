@@ -3,18 +3,18 @@ import { apiPublicFetch } from '@/lib/api/public'
 import type { AuthResponse, AuthUser, Me } from '@/lib/api/types'
 import { adopt } from '@/lib/auth/session'
 
-export async function login(email: string, password: string): Promise<void> {
+export async function login(email: string, password: string, captchaToken?: string): Promise<void> {
   const body = await apiPublicFetch<AuthResponse>('/auth/login', {
     method: 'POST',
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ email, password, captchaToken }),
   })
   adopt(body)
 }
 
-export async function register(email: string, password: string): Promise<void> {
+export async function register(email: string, password: string, captchaToken?: string): Promise<void> {
   const body = await apiPublicFetch<AuthResponse>('/auth/register', {
     method: 'POST',
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ email, password, captchaToken }),
   })
   adopt(body)
 }
@@ -58,8 +58,11 @@ export function resendVerification(): Promise<void> {
 }
 
 /** Asks for a password reset link. Succeeds whether or not an account exists for `email`. */
-export function requestPasswordReset(email: string): Promise<void> {
-  return apiPublicFetch<void>('/auth/password/forgot', { method: 'POST', body: JSON.stringify({ email }) })
+export function requestPasswordReset(email: string, captchaToken?: string): Promise<void> {
+  return apiPublicFetch<void>('/auth/password/forgot', {
+    method: 'POST',
+    body: JSON.stringify({ email, captchaToken }),
+  })
 }
 
 /** Sets a new password from an emailed `token`; the API signs the account out everywhere. */

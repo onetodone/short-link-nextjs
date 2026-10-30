@@ -2,7 +2,14 @@ import type * as z from 'zod'
 import { ApiError, SessionExpiredError } from '@/lib/api/errors'
 
 export type FormState =
-  { error?: string; code?: string; fieldErrors?: Record<string, string>; success?: boolean } | undefined
+  | {
+      error?: string
+      code?: string
+      fieldErrors?: Record<string, string>
+      captchaRequired?: boolean
+      success?: boolean
+    }
+  | undefined
 
 export function firstZodError(error: z.ZodError, fallback = 'Invalid input.'): string {
   return error.issues[0]?.message ?? fallback
@@ -27,7 +34,7 @@ export function toFormState(error: unknown): FormState {
       }
       return { error: error.issues[0].message, code: error.code, fieldErrors }
     }
-    return { error: error.message, code: error.code }
+    return { error: error.message, code: error.code, ...(error.captchaRequired && { captchaRequired: true }) }
   }
   if (error instanceof SessionExpiredError) return { error: error.message }
   return { error: 'Something went wrong. Please try again.' }

@@ -31,6 +31,16 @@ describe('loginSchema', () => {
   })
 })
 
+describe('captchaToken', () => {
+  it('passes a widget token through and drops an empty one', () => {
+    const values = { email: 'a@b.co', password: 'x'.repeat(8) }
+
+    expect(loginSchema.parse({ ...values, captchaToken: 'tok' }).captchaToken).toBe('tok')
+    expect(registerSchema.parse({ ...values, captchaToken: '' }).captchaToken).toBeUndefined()
+    expect(forgotPasswordSchema.parse({ email: 'a@b.co' }).captchaToken).toBeUndefined()
+  })
+})
+
 describe('registerSchema', () => {
   it('enforces the password length bounds', () => {
     expect(firstMessage(registerSchema.safeParse({ email: 'a@b.co', password: 'short' }))).toBe(

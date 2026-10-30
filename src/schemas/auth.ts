@@ -6,9 +6,16 @@ const email = z
   .toLowerCase()
   .pipe(z.email({ error: 'Please enter a valid email address.' }))
 
+/** Turnstile token the widget adds to the form; absent while the bot check is off. */
+const captchaToken = z
+  .string()
+  .optional()
+  .transform((value) => value || undefined)
+
 export const loginSchema = z.object({
   email,
   password: z.string().min(1, { error: 'Password is required.' }),
+  captchaToken,
 })
 
 const newPassword = z
@@ -19,10 +26,11 @@ const newPassword = z
 export const registerSchema = z.object({
   email,
   password: newPassword,
+  captchaToken,
 })
 
 /** The forgot-password form: the address to send a reset link to. */
-export const forgotPasswordSchema = z.object({ email })
+export const forgotPasswordSchema = z.object({ email, captchaToken })
 
 /** The reset-password form: the emailed token plus the new password, typed twice. */
 export const resetPasswordSchema = z

@@ -14,6 +14,24 @@ beforeEach(() => {
   vi.stubGlobal('fetch', fetchMock)
 })
 
+describe('captcha token', () => {
+  it('is sent with sign-in, registration and reset requests, and left out without one', async () => {
+    const { login, register, requestPasswordReset } = await import('@/lib/api/auth')
+    fetchMock.mockImplementation(async () => json(200, { user, accessToken: 'a.b.c' }))
+
+    await login('ann@example.com', 'secret', 'tok')
+    await register('ann@example.com', 'password1', 'tok')
+    await requestPasswordReset('ann@example.com')
+
+    const bodies = fetchMock.mock.calls.map(([, init]) => JSON.parse(String(init?.body)) as unknown)
+    expect(bodies).toEqual([
+      { email: 'ann@example.com', password: 'secret', captchaToken: 'tok' },
+      { email: 'ann@example.com', password: 'password1', captchaToken: 'tok' },
+      { email: 'ann@example.com' },
+    ])
+  })
+})
+
 describe('verifyEmail', () => {
   it('sends a single-use token once for repeated calls', async () => {
     const { verifyEmail } = await import('@/lib/api/auth')

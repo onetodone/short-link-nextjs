@@ -53,6 +53,19 @@ describe('runFormAction', () => {
 })
 
 describe('toFormState', () => {
+  it('carries the bot check flag so the sign-in form can show the widget', () => {
+    const failed = parseApiError(401, { message: 'Invalid email or password', captchaRequired: true })
+
+    expect(toFormState(failed)).toEqual({
+      error: 'Invalid email or password',
+      code: undefined,
+      captchaRequired: true,
+    })
+    expect(toFormState(parseApiError(401, { message: 'Invalid email or password' }))).not.toHaveProperty(
+      'captchaRequired',
+    )
+  })
+
   it('maps API validation issues to field errors, keeping the first per field', () => {
     const error = new ApiError('Invalid URL', {
       status: 400,
