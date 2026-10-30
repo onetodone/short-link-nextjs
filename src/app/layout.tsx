@@ -17,7 +17,8 @@ export const metadata: Metadata = {
     default: SITE_NAME,
     template: `%s | ${SITE_NAME}`,
   },
-  description: 'Create, track, and manage your short links.',
+  description:
+    'Free link shortener with click counts: turn long links into short ones, change where they lead at any time, and see how many people opened each.',
   openGraph: {
     type: 'website',
     siteName: SITE_NAME,
