@@ -26,6 +26,14 @@ describe('parseApiError', () => {
     expect(invalid.issues).toBeUndefined()
   })
 
+  it('maps a wrong confirming password to its own code, not a session error', () => {
+    const error = parseApiError(403, { code: 'INVALID_PASSWORD', message: 'Password is incorrect' })
+
+    expect(error.status).toBe(403)
+    expect(error.code).toBe('INVALID_PASSWORD')
+    expect(error.message).toBe('Your password is incorrect.')
+  })
+
   it('maps 429 to a throttle error regardless of the body', () => {
     const error = parseApiError(429, { message: 'ThrottlerException: Too Many Requests' })
 

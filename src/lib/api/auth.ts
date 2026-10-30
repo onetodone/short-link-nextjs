@@ -23,28 +23,33 @@ export function fetchMe(): Promise<Me> {
   return apiFetch<Me>('/auth/me')
 }
 
-const verifications = new Map<string, Promise<AuthUser>>()
-
 /**
- * Confirms the email address behind an emailed `token`. The token is single-use, so concurrent and
- * repeated calls with the same token share one request; a failed request is forgotten so it can be retried.
+ * Posts a single-use emailed `token` at most once at a time: concurrent and repeated calls share one
+ * request (React dev mode runs effects twice), and a failed request is forgotten so it can be retried.
  */
-export function verifyEmail(token: string): Promise<AuthUser> {
-  const known = verifications.get(token)
+function postOnce(cache: Map<string, Promise<AuthUser>>, path: string, token: string): Promise<AuthUser> {
+  const known = cache.get(token)
   if (known) return known
 
-  const request = apiPublicFetch<{ user: AuthUser }>('/auth/verify-email', {
+  const request = apiPublicFetch<{ user: AuthUser }>(path, {
     method: 'POST',
     body: JSON.stringify({ token }),
   }).then(
     (body) => body.user,
     (error: unknown) => {
-      verifications.delete(token)
+      cache.delete(token)
       throw error
     },
   )
-  verifications.set(token, request)
+  cache.set(token, request)
   return request
+}
+
+const verifications = new Map<string, Promise<AuthUser>>()
+
+/** Confirms the email address behind an emailed `token`; repeated calls with one token send it once. */
+export function verifyEmail(token: string): Promise<AuthUser> {
+  return postOnce(verifications, '/auth/verify-email', token)
 }
 
 /** Emails the signed-in user a new confirmation link; `429 EMAIL_COOLDOWN` while the last one is fresh. */
@@ -60,4 +65,29 @@ export function requestPasswordReset(email: string): Promise<void> {
 /** Sets a new password from an emailed `token`; the API signs the account out everywhere. */
 export function resetPassword(token: string, password: string): Promise<void> {
   return apiPublicFetch<void>('/auth/password/reset', { method: 'POST', body: JSON.stringify({ token, password }) })
+}
+
+/** Sets a new password for the signed-in account; the API keeps this session and revokes every other one. */
+export function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  return apiFetch<void>('/auth/me/password', {
+    method: 'PATCH',
+    body: JSON.stringify({ currentPassword, newPassword }),
+  })
+}
+
+/** Emails a confirmation link to `newEmail`; the account keeps its address until that link is opened. */
+export function requestEmailChange(newEmail: string, password: string): Promise<void> {
+  return apiFetch<void>('/auth/me/email', { method: 'POST', body: JSON.stringify({ newEmail, password }) })
+}
+
+const emailChanges = new Map<string, Promise<AuthUser>>()
+
+/** Moves the account to the address behind an emailed `token`; repeated calls with one token send it once. */
+export function confirmEmailChange(token: string): Promise<AuthUser> {
+  return postOnce(emailChanges, '/auth/email/confirm', token)
+}
+
+/** Deletes the signed-in account and every link it owns. The API clears the refresh cookie. */
+export function deleteAccount(password: string): Promise<void> {
+  return apiFetch<void>('/auth/me', { method: 'DELETE', body: JSON.stringify({ password }) })
 }

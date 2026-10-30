@@ -6,13 +6,16 @@ import { useAuth } from '@/lib/auth/context'
 import { useApiQuery } from '@/hooks/use-api-query'
 import { formatDate } from '@/lib/format'
 import { PageContainer, PageHeader } from '@/components/page-header'
-import { ProfileCardSkeleton } from '@/components/page-skeletons'
+import { ProfileCardsSkeleton } from '@/components/page-skeletons'
 import { SignOutAllDialog } from '@/components/auth/sign-out-all-dialog'
+import { ChangeEmailForm } from '@/components/account/change-email-form'
+import { ChangePasswordForm } from '@/components/account/change-password-form'
+import { DeleteAccountDialog } from '@/components/account/delete-account-dialog'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 
-const HEADER = { title: 'Profile', description: 'Your account details.' }
+const HEADER = { title: 'Profile', description: 'Your account details and settings.' }
 
 export function ProfileView() {
   const { user, logout, logoutAll } = useAuth()
@@ -25,7 +28,7 @@ export function ProfileView() {
       <PageHeader title={HEADER.title} description={HEADER.description} />
 
       {loading ? (
-        <ProfileCardSkeleton />
+        <ProfileCardsSkeleton />
       ) : error ? (
         <Card>
           <CardContent className="flex flex-col items-start gap-3">
@@ -74,6 +77,39 @@ export function ProfileView() {
             </section>
           </CardContent>
         </Card>
+      )}
+      {data && (
+        <>
+          <Card>
+            <CardHeader>
+              <CardTitle>Password</CardTitle>
+              <CardDescription>Change the password you sign in with.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ChangePasswordForm />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Email address</CardTitle>
+              <CardDescription>We send a confirmation link to the new address before switching to it.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ChangeEmailForm currentEmail={data.email} />
+            </CardContent>
+          </Card>
+          <Card className="ring-destructive/30">
+            <CardHeader>
+              <CardTitle>Delete account</CardTitle>
+              <CardDescription>
+                Permanently deletes your account and every short link you own. The links stop working at once.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <DeleteAccountDialog />
+            </CardContent>
+          </Card>
+        </>
       )}
     </PageContainer>
   )

@@ -39,3 +39,28 @@ describe('verifyEmail', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 })
+
+describe('confirmEmailChange', () => {
+  it('sends a single-use token once for repeated calls', async () => {
+    const { confirmEmailChange } = await import('@/lib/api/auth')
+    fetchMock.mockResolvedValue(json(200, { user }))
+
+    await Promise.all([confirmEmailChange('c1'), confirmEmailChange('c1')])
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/v1/auth/email/confirm',
+      expect.objectContaining({ method: 'POST', body: JSON.stringify({ token: 'c1' }) }),
+    )
+  })
+
+  it('keeps its tokens apart from email verification', async () => {
+    const { confirmEmailChange, verifyEmail } = await import('@/lib/api/auth')
+    fetchMock.mockImplementation(async () => json(200, { user }))
+
+    await verifyEmail('same')
+    await confirmEmailChange('same')
+
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+})

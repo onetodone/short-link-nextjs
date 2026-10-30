@@ -41,7 +41,7 @@ export function EditUrlBodySkeleton() {
   )
 }
 
-export function ProfileCardSkeleton() {
+function ProfileCardSkeleton() {
   return (
     <Card>
       <CardHeader>
@@ -65,11 +65,42 @@ export function ProfileCardSkeleton() {
   )
 }
 
+function ProfileFormCardSkeleton({ fields }: { fields: number }) {
+  return (
+    <Card>
+      <CardHeader>
+        <Skeleton className="h-5 w-32" />
+        <Skeleton className="h-4 w-64" />
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        {Array.from({ length: fields }, (_, index) => (
+          <div key={index} className="flex flex-col gap-2">
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="h-9 w-full" />
+          </div>
+        ))}
+        <Skeleton className="h-9 w-40" />
+      </CardContent>
+    </Card>
+  )
+}
+
+export function ProfileCardsSkeleton() {
+  return (
+    <>
+      <ProfileCardSkeleton />
+      <ProfileFormCardSkeleton fields={3} />
+      <ProfileFormCardSkeleton fields={2} />
+      <ProfileFormCardSkeleton fields={0} />
+    </>
+  )
+}
+
 export function ProfileBodySkeleton() {
   return (
     <PageContainer width="2xl">
-      <PageHeader title="Profile" description="Your account details." />
-      <ProfileCardSkeleton />
+      <PageHeader title="Profile" description="Your account details and settings." />
+      <ProfileCardsSkeleton />
     </PageContainer>
   )
 }

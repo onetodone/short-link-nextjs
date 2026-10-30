@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest'
 
-import { forgotPasswordSchema, loginSchema, registerSchema, resetPasswordSchema } from '@/schemas/auth'
+import {
+  changeEmailSchema,
+  changePasswordSchema,
+  deleteAccountSchema,
+  forgotPasswordSchema,
+  loginSchema,
+  registerSchema,
+  resetPasswordSchema,
+} from '@/schemas/auth'
 import { SHORT_CODE_PATTERN, urlSchema } from '@/schemas/url'
 
 function firstMessage(result: { success: boolean; error?: { issues: { message: string }[] } }): string | undefined {
@@ -90,6 +98,49 @@ describe('resetPasswordSchema', () => {
     )
     expect(firstMessage(resetPasswordSchema.safeParse({ ...valid, password: 'short', confirmPassword: 'short' }))).toBe(
       'Password must be at least 8 characters.',
+    )
+  })
+})
+
+describe('changePasswordSchema', () => {
+  const valid = { currentPassword: 'old', newPassword: 'password123', confirmPassword: 'password123' }
+
+  it('accepts any current password and a matching new one', () => {
+    expect(changePasswordSchema.parse(valid)).toEqual(valid)
+  })
+
+  it('requires the current password and a matching repeat', () => {
+    expect(firstMessage(changePasswordSchema.safeParse({ ...valid, currentPassword: '' }))).toBe(
+      'Enter your current password.',
+    )
+    const mismatch = changePasswordSchema.safeParse({ ...valid, confirmPassword: 'password124' })
+    expect(mismatch.error?.issues[0]).toMatchObject({ path: ['confirmPassword'], message: 'Passwords do not match.' })
+  })
+})
+
+describe('changeEmailSchema', () => {
+  it('normalizes the new address and requires the password', () => {
+    expect(changeEmailSchema.parse({ newEmail: ' Bob@Example.com ', password: 'x' })).toEqual({
+      newEmail: 'bob@example.com',
+      password: 'x',
+    })
+    expect(firstMessage(changeEmailSchema.safeParse({ newEmail: 'bob@example.com', password: '' }))).toBe(
+      'Enter your current password.',
+    )
+  })
+})
+
+describe('deleteAccountSchema', () => {
+  it('accepts the exact confirmation word', () => {
+    expect(deleteAccountSchema.parse({ password: 'x', confirmation: ' DELETE ' })).toEqual({
+      password: 'x',
+      confirmation: 'DELETE',
+    })
+  })
+
+  it('rejects any other confirmation', () => {
+    expect(firstMessage(deleteAccountSchema.safeParse({ password: 'x', confirmation: 'delete' }))).toBe(
+      'Type DELETE to confirm.',
     )
   })
 })
