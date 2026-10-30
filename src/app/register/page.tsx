@@ -5,6 +5,7 @@ import { RegisterForm } from './register-form'
 
 export const metadata: Metadata = {
   title: 'Register',
+  alternates: { canonical: '/register' },
 }
 
 export default function RegisterPage() {

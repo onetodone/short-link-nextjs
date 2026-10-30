@@ -5,6 +5,7 @@ import { LoginForm } from './login-form'
 
 export const metadata: Metadata = {
   title: 'Sign in',
+  alternates: { canonical: '/login' },
 }
 
 export default function LoginPage() {
