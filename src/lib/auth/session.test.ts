@@ -118,6 +118,43 @@ describe('refreshAccessToken', () => {
     expect(tokenStore.getAccessToken()).toBeNull()
     expect(session.getSessionSnapshot().user).toBeNull()
     expect(onExpired).toHaveBeenCalledTimes(1)
+    expect(onExpired).toHaveBeenCalledWith(undefined)
+  })
+
+  it('expires a suspended account once, passing the suspension message', async () => {
+    const { session, tokenStore, errors } = await load()
+    session.adopt(authResponse('old'), false)
+    const onExpired = vi.fn()
+    session.onSessionExpired(onExpired)
+    fetchMock.mockResolvedValueOnce(json(403, { code: 'ACCOUNT_SUSPENDED', supportEmail: 'help@example.com' }))
+
+    const error = await session.refreshAccessToken().catch((e: unknown) => e)
+
+    expect(error).toBeInstanceOf(errors.SessionExpiredError)
+    expect((error as Error).message).toBe('This account is suspended. Contact help@example.com to find out why.')
+    expect(callsTo('/api/v1/auth/refresh')).toHaveLength(1)
+    expect(tokenStore.getAccessToken()).toBeNull()
+    expect(onExpired).toHaveBeenCalledExactlyOnceWith(
+      'This account is suspended. Contact help@example.com to find out why.',
+    )
+  })
+
+  it('ends the session when a request answers 403 ACCOUNT_SUSPENDED, without a refresh', async () => {
+    const { session, tokenStore, client, errors } = await load()
+    session.adopt(authResponse('live'), false)
+    const onExpired = vi.fn()
+    session.onSessionExpired(onExpired)
+    fetchMock.mockResolvedValueOnce(json(403, { code: 'ACCOUNT_SUSPENDED', supportEmail: 'help@example.com' }))
+
+    const error = await client.apiFetch('/urls', { method: 'POST', body: '{}' }).catch((e: unknown) => e)
+
+    expect(error).toBeInstanceOf(errors.ApiError)
+    expect((error as InstanceType<typeof errors.ApiError>).code).toBe('ACCOUNT_SUSPENDED')
+    expect(callsTo('/api/v1/auth/refresh')).toHaveLength(0)
+    expect(tokenStore.getAccessToken()).toBeNull()
+    expect(onExpired).toHaveBeenCalledExactlyOnceWith(
+      'This account is suspended. Contact help@example.com to find out why.',
+    )
   })
 
   it('keeps the session on a network failure', async () => {

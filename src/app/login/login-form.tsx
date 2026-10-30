@@ -3,6 +3,7 @@
 import { useActionState, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { BanIcon } from 'lucide-react'
 import { loginAction } from '@/lib/actions/auth-actions'
 import type { FormState } from '@/lib/forms'
 import { useActionResult } from '@/hooks/use-action-result'
@@ -77,7 +78,20 @@ export function LoginForm() {
                 {state?.fieldErrors?.password && <FieldError>{state.fieldErrors.password}</FieldError>}
               </FieldContent>
             </Field>
-            {state?.error && !state.fieldErrors && <FieldError>{state.error}</FieldError>}
+            {state?.code === 'ACCOUNT_SUSPENDED' ? (
+              <div
+                role="alert"
+                className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm"
+              >
+                <BanIcon className="mt-0.5 size-4 shrink-0 text-destructive" aria-hidden />
+                <div className="flex flex-col gap-1">
+                  <p className="font-medium">Account suspended</p>
+                  <p className="break-words text-muted-foreground">{state.error}</p>
+                </div>
+              </div>
+            ) : (
+              state?.error && !state.fieldErrors && <FieldError>{state.error}</FieldError>
+            )}
             <Button type="submit" disabled={pending} className="w-full">
               {pending ? 'Signing in...' : 'Sign in'}
             </Button>

@@ -73,6 +73,7 @@ describe('parseApiError', () => {
     ['LOCAL_HOST', 'Use a public domain — local and internal addresses are not allowed.'],
     ['OWN_DOMAIN', 'This is already a short link. Use the address it points to instead.'],
     ['URL_SHORTENER', 'Links to other URL shorteners or redirectors are not allowed. Use the final address instead.'],
+    ['UNSAFE_DESTINATION', 'This destination is flagged as unsafe (phishing, malware or unwanted software).'],
   ])('maps a 422 DESTINATION_REJECTED %s to a url issue', (reason, message) => {
     const error = parseApiError(422, { message: 'API copy', code: 'DESTINATION_REJECTED', reason })
 
@@ -87,6 +88,21 @@ describe('parseApiError', () => {
     expect(error.issues).toEqual([{ path: 'url', message: 'API copy' }])
 
     expect(parseApiError(422, { code: 'DESTINATION_REJECTED' }).message).toBe('This destination URL is not allowed.')
+  })
+
+  it('maps a 403 ACCOUNT_SUSPENDED to a message naming the support address', () => {
+    const error = parseApiError(403, {
+      message: 'This account is suspended. Contact help@example.com for details',
+      code: 'ACCOUNT_SUSPENDED',
+      supportEmail: 'help@example.com',
+    })
+
+    expect(error.status).toBe(403)
+    expect(error.code).toBe('ACCOUNT_SUSPENDED')
+    expect(error.message).toBe('This account is suspended. Contact help@example.com to find out why.')
+    expect(parseApiError(403, { code: 'ACCOUNT_SUSPENDED' }).message).toBe(
+      'This account is suspended. Contact support.',
+    )
   })
 
   it('prefers the API code over the error name', () => {
