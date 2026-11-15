@@ -4,6 +4,10 @@ import { VerifyEmailView } from './verify-email-view'
 export const metadata: Metadata = {
   title: 'Confirm email',
   referrer: 'no-referrer',
+  robots: {
+    index: false,
+    follow: true,
+  },
 }
 
 export default async function VerifyEmailPage({ searchParams }: PageProps<'/verify-email'>) {
