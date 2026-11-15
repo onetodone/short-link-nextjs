@@ -6,6 +6,10 @@ import { RegisterForm } from './register-form'
 export const metadata: Metadata = {
   title: 'Register',
   alternates: { canonical: '/register' },
+  robots: {
+    index: false,
+    follow: true,
+  },
 }
 
 export default function RegisterPage() {

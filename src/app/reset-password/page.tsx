@@ -5,6 +5,10 @@ import { ResetPasswordForm } from './reset-password-form'
 export const metadata: Metadata = {
   title: 'Reset password',
   referrer: 'no-referrer',
+  robots: {
+    index: false,
+    follow: true,
+  },
 }
 
 export default async function ResetPasswordPage({ searchParams }: PageProps<'/reset-password'>) {
